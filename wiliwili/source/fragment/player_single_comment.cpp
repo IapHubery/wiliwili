@@ -452,7 +452,8 @@ PlayerCommentAction::PlayerCommentAction(CommentUiType type) {
     this->svgGallery->registerClickAction([this](...) {
         std::vector<std::string> data;
         for (auto& i : this->comment->getData().content.pictures) {
-            data.emplace_back(ImageHelper::parseGifImageUrl(i.img_src, ImageHelper::note_raw_ext));
+            // 查看图片时使用原图地址，保证能看清高清大图
+            data.emplace_back(ImageHelper::parseRawImageUrl(i.img_src));
         }
         Intent::openGallery(data);
         return true;

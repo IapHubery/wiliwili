@@ -163,6 +163,9 @@ void BilibiliClient::get_video_url_cast(uint64_t oid, uint64_t cid, int type, in
 void BilibiliClient::get_comment(const std::string& oid, int next, int mode, int type,
                                  const std::function<void(VideoCommentResultWrapper)>& callback,
                                  const ErrorCallback& error) {
+    // 未登录时如果请求里带 cookie，评论接口只会返回 3 条数据且 is_end=true，
+    // 表现为「看不到全部评论」也无法翻页；未登录时不发送 cookie 即可拿到完整列表
+    const bool noCookie = !ProgramConfig::instance().hasLoginInfo();
     HTTP::getResultAsync<VideoCommentResultWrapper>(
         Api::Comment,
         {{"mode", std::to_string(mode)},
@@ -174,20 +177,21 @@ void BilibiliClient::get_comment(const std::string& oid, int next, int mode, int
             result.requestIndex = next;
             callback(result);
         },
-        error);
+        error, false, noCookie);
 }
 
 void BilibiliClient::get_comment_detail(const std::string& access_key, const std::string& oid, uint64_t rpid,
                                         size_t next, int type,
                                         const std::function<void(VideoSingleCommentDetail)>& callback,
                                         const ErrorCallback& error) {
+    const bool noCookie = !ProgramConfig::instance().hasLoginInfo();
     HTTP::getResultAsync<VideoSingleCommentDetail>(Api::CommentDetail,
                                                    {{"csrf", access_key},
                                                     {"next", std::to_string(next)},
                                                     {"oid", oid},
                                                     {"root", std::to_string(rpid)},
                                                     {"type", std::to_string(type)}},
-                                                   callback, error);
+                                                   callback, error, false, noCookie);
 }
 
 void BilibiliClient::get_season_detail(uint64_t seasonID, uint64_t epID, const std::function<void(SeasonResultWrapper)>& callback,

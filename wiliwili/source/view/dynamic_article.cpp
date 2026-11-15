@@ -80,7 +80,8 @@ public:
     void setGalleryData(const bilibili::DynamicArticleModuleDraw* imageData) {
         this->svgGallery->setVisibility(brls::Visibility::VISIBLE);
         for (auto& i : imageData->items) {
-            this->images.emplace_back(ImageHelper::parseGifImageUrl(i.src, ImageHelper::note_raw_ext));
+            // 查看图片时使用原图地址，保证能看清高清大图
+            this->images.emplace_back(ImageHelper::parseRawImageUrl(i.src));
         }
     }
 

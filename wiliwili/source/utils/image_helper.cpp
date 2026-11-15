@@ -211,6 +211,12 @@ void ImageHelper::requestImage() {
     session.SetConnectTimeout(cpr::ConnectTimeout{bilibili::HTTP::CONNECTION_TIMEOUT});
     session.SetVerifySsl(bilibili::HTTP::VERIFY);
     session.SetProxies(bilibili::HTTP::PROXIES);
+    // 部分图床对没有 UA / Referer 的请求会返回 403（未登录、缓存未命中时更容易出现），
+    // 这里补齐浏览器请求头，保证可以正常加载图片和原图
+    session.SetHeader(cpr::Header{
+        {"User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"},
+        {"Referer", "https://www.bilibili.com/"},
+    });
     session.SetUrl(cpr::Url{this->imageUrl});
     session.SetProgressCallback(cpr::ProgressCallback([this](...) -> bool { return !this->isCancel; }));
     cpr::Response r = session.Get();
@@ -352,6 +358,13 @@ std::string ImageHelper::parseGifImageUrl(const std::string& url, const std::str
 #else
     return url + ext;
 #endif
+}
+
+std::string ImageHelper::parseRawImageUrl(const std::string& url) {
+    // gif 无法直接解码，仍按其转换后的 jpg 链接加载；其余图片去掉裁剪后缀，查看原图
+    if (pystring::endswith(url, "gif")) return parseGifImageUrl(url, note_raw_ext);
+    auto pos = url.find('@');
+    return pos == std::string::npos ? url : url.substr(0, pos);
 }
 
 std::string ImageHelper::parseNoteImageUrl(const std::string& url, size_t w, size_t h) {

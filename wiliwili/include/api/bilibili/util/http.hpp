@@ -80,6 +80,14 @@ public:
 
     static std::string getEncodedCookie(const cpr::Cookies& cookies);
 
+    // 未登录时，部分接口（例如评论列表）只要请求里带了 cookie，就会只返回很短的列表
+    // 并且 is_end=true（无法翻页），这里提供一套不带 cookie 的请求头
+    static cpr::Header getHeadersWithoutCookie() {
+        cpr::Header headers = HEADERS;
+        headers.erase("cookie");
+        return headers;
+    }
+
     static std::shared_ptr<cpr::Session> createSession() {
         auto session = std::make_shared<cpr::Session>();
         CURL* curl = session->GetCurlHolder()->handle;
@@ -117,8 +125,10 @@ public:
 
     static void _cpr_get(const std::string& url, const cpr::Parameters& parameters = {},
                           const std::function<void(const cpr::Response&)>& callback = nullptr,
-                          const ErrorCallback& error                                = nullptr) {
-        auto session = createSession();;
+                          const ErrorCallback& error                                = nullptr,
+                          bool noCookie                                             = false) {
+        auto session = createSession();
+        if (noCookie) session->SetHeader(getHeadersWithoutCookie());
         session->SetUrl(cpr::Url{parseLink(url)});
         session->SetParameters(parameters);
 
@@ -173,7 +183,8 @@ public:
                                cpr::Parameters parameters                      = {},
                                const std::function<void(ReturnType)>& callback = nullptr,
                                const ErrorCallback& error                      = nullptr,
-                               bool needSign                                   = false) {
+                               bool needSign                                   = false,
+                               bool noCookie                                   = false) {
         if (needSign) {
             signParameters(parameters);
         }
@@ -183,7 +194,7 @@ public:
             [callback, error](const cpr::Response& r) {
                 parseJson<ReturnType>(r, callback, error);
             },
-            error);
+            error, noCookie);
     }
 
     template <typename ReturnType>
@@ -191,8 +202,9 @@ public:
                                       cpr::Parameters parameters                      = {},
                                       const std::function<void(ReturnType)>& callback = nullptr,
                                       const ErrorCallback& error                      = nullptr,
-                                      bool needSign                                   = false) {
-        wbi::updateWbiKeys([url, parameters, callback, error, needSign]() mutable {
+                                      bool needSign                                   = false,
+                                      bool noCookie                                   = false) {
+        wbi::updateWbiKeys([url, parameters, callback, error, needSign, noCookie]() mutable {
             if (needSign) {
                 signParameters(parameters);
             }
@@ -203,7 +215,7 @@ public:
                 [callback, error](const cpr::Response& r) {
                     parseJson<ReturnType>(r, callback, error);
                 },
-                error);
+                error, noCookie);
         }, error);
     }
 

@@ -49,6 +49,9 @@ public:
 
     static std::string parseGifImageUrl(const std::string& url, const std::string& ext);
 
+    /// 去掉图片链接上的裁剪参数，获取原图（高清大图）
+    static std::string parseRawImageUrl(const std::string& url);
+
     static std::string parseNoteImageUrl(const std::string& url, size_t w, size_t h);
 
     /// 图片请求后缀，用来控制图片大小

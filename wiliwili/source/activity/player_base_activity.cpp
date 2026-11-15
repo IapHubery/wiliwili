@@ -699,9 +699,11 @@ void BasePlayerActivity::onVideoPlayUrl(const bilibili::VideoUrlResult& result) 
                     if (auto m = pickFirstAvailableStandard()) { a = *m; selected = true; }
                 }
             }
-            // 生成音频列表
+            // 生成音频列表：只使用主音频地址。
+            // 若把备用地址也作为 audio-file 传入，mpv 会同时打开多条音频流（各自带缓存），
+            // 在弱网或高负载下更容易出现音频欠载，听感上就是间歇性的电流声 / 爆音；
+            // 而且当前并没有切换备用音轨的入口，备用地址没有实际作用。
             audios.emplace_back(a.base_url);
-            audios.insert(audios.end(), a.backup_url.begin(), a.backup_url.end());
             brls::Logger::debug("Dash quality: {}; video: {}; audio: {}", videoUrlResult.quality, v.codecid, a.id);
         }
 

@@ -316,6 +316,9 @@ void MPVCore::init() {
     // 显卡驱动存在 DPC 延迟时）音频线程来不及取数据会出现间歇性爆音（电流滋滋声）。
     // 适当增大缓冲可以吸收系统调度抖动，避免音频欠载。
     mpvSetOptionString(mpv, "audio-buffer", "0.4");
+    // 暂停 / 拖动进度 / 切换清晰度时，避免音频设备反复停止与重启；
+    // HDMI / AVR 等设备在音频流重启时经常会产生「啪」的爆音
+    mpvSetOptionString(mpv, "audio-stream-silence", "yes");
     mpvSetOptionString(mpv, "idle", "yes");
     mpvSetOptionString(mpv, "loop-file", "no");
     mpvSetOptionString(mpv, "osd-level", "0");
