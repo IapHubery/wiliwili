@@ -395,8 +395,13 @@ void MPVCore::init() {
     // mpvSetOptionString(mpv, "msg-level", "all=no");
     if (MPVCore::TERMINAL) {
         mpvSetOptionString(mpv, "terminal", "yes");
+        // Windows 的 GUI 构建（-DWIN32_TERMINAL=OFF）没有控制台，terminal 的输出会被丢弃，
+        // 这里同时把 mpv 日志写入配置目录，方便查看音频/解码等信息
+        mpvSetOptionString(mpv, "log-file", fmt::format("{}/mpv.log", confDir).c_str());
         if (brls::Logger::getLogLevel() >= brls::LogLevel::LOG_DEBUG) {
             mpvSetOptionString(mpv, "msg-level", "all=v");
+        } else {
+            mpvSetOptionString(mpv, "msg-level", "ao=v,audio=v,all=info");
         }
     }
 
