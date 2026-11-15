@@ -27,6 +27,8 @@
         "format": "格式",
         "video_codec": "影像編碼",
         "audio_quality": "影像音質",
+        "default_video_quality": "預設畫質",
+        "default_audio_quality": "預設音質",
         "video_format": "影像格式",
         "dolby": "杜比全景聲",
         "hi_res": "Hi-Res 無損",

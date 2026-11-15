@@ -27,6 +27,8 @@
         "format": "フォーマット",
         "video_codec": "ビデオコーデック",
         "audio_quality": "オーディオ品質",
+        "default_video_quality": "デフォルト画質",
+        "default_audio_quality": "デフォルト音質",
         "video_format": "動画ぬ形式",
         "window_fullscreen_on_app_fullscreen": "アプリ内全画面時にウィンドウを全画面にする",
         "dolby": "Dolby Atmos",

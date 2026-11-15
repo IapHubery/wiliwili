@@ -27,6 +27,8 @@
         "format": "Format",
         "video_codec": "Video Codec",
         "audio_quality": "Audio Quality",
+        "default_video_quality": "Default Quality",
+        "default_audio_quality": "Default Audio Quality",
         "video_format": "Video format",
         "dolby": "Dolby Atmos",
         "hi_res": "Hi-Res",

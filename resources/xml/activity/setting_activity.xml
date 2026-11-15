@@ -53,6 +53,12 @@
                                     id="setting/video/hwdec"/>
 
                             <SelectorCell
+                                    id="setting/video/default_quality"/>
+
+                            <SelectorCell
+                                    id="setting/audio/default_quality"/>
+
+                            <SelectorCell
                                     id="setting/video/inmemory"/>
 
                         </brls:Box>
@@ -72,9 +78,6 @@
 
                             <SelectorCell
                                     id="setting/video/codec"/>
-
-                            <SelectorCell
-                                    id="setting/audio/quality"/>
 
                         </brls:Box>
                         <brls:Header

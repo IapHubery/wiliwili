@@ -60,7 +60,8 @@ private:
     BRLS_BIND(BiliSelectorCell, selectorInmemory, "setting/video/inmemory");
     BRLS_BIND(BiliSelectorCell, selectorFormat, "setting/video/format");
     BRLS_BIND(BiliSelectorCell, selectorCodec, "setting/video/codec");
-    BRLS_BIND(BiliSelectorCell, selectorQuality, "setting/audio/quality");
+    BRLS_BIND(BiliSelectorCell, selectorDefaultQuality, "setting/video/default_quality");
+    BRLS_BIND(BiliSelectorCell, selectorDefaultAudioQuality, "setting/audio/default_quality");
     BRLS_BIND(BiliSelectorCell, selectorFPS, "setting/fps");
     BRLS_BIND(TextBox, labelOpensource, "setting/label/opensource");
     BRLS_BIND(brls::BooleanCell, cellShowBar, "cell/showBottomBar");

@@ -25,6 +25,7 @@
 #include "view/selector_cell.hpp"
 #include "view/mpv_core.hpp"
 #include "view/video_view.hpp"
+#include "presenter/video_detail.hpp"
 
 #if defined(__APPLE__) || defined(__linux__) || defined(_WIN32)
 #include "borealis/platforms/desktop/desktop_platform.hpp"
@@ -558,10 +559,34 @@ void SettingActivity::onContentAvailable() {
                             return true;
                         });
 
-    /// AudioBandwidth
+    /// DefaultVideoQuality
+#if defined(__PSV__)
+    static const std::vector<int> qualityCodes          = {64, 32, 16};
+    static const std::vector<std::string> qualityNames  = {"720P", "480P", "360P"};
+#else
+    static const std::vector<int> qualityCodes = {127, 120, 116, 112, 80, 64, 32, 16};
+    static const std::vector<std::string> qualityNames = {"8K", "4K", "1080P60", "1080P+", "1080P", "720P", "480P", "360P"};
+#endif
+    const int currentQuality  = conf.getIntOption(SettingItem::VIDEO_QUALITY);
+    int qualityIndex          = 0;
+    for (size_t i = 0; i < qualityCodes.size(); i++) {
+        if (qualityCodes[i] == currentQuality) {
+            qualityIndex = (int)i;
+            break;
+        }
+    }
+    selectorDefaultQuality->init("wiliwili/setting/app/playback/default_video_quality"_i18n, qualityNames,
+                                 qualityIndex, [](int data) {
+                                     int code = qualityCodes[data];
+                                     ProgramConfig::instance().setSettingItem(SettingItem::VIDEO_QUALITY, code);
+                                     VideoDetail::defaultQuality = code;
+                                     return true;
+                                 });
+
+    /// DefaultAudioQuality
     auto bandwidthOption = conf.getOptionData(SettingItem::AUDIO_QUALITY);
-    selectorQuality->init(
-        "wiliwili/setting/app/playback/audio_quality"_i18n,
+    selectorDefaultAudioQuality->init(
+        "wiliwili/setting/app/playback/default_audio_quality"_i18n,
         {"wiliwili/setting/app/playback/dolby"_i18n, "wiliwili/setting/app/playback/hi_res"_i18n, "wiliwili/home/common/high"_i18n, "wiliwili/home/common/medium"_i18n, "wiliwili/home/common/low"_i18n},
         conf.getIntOptionIndex(SettingItem::AUDIO_QUALITY), [bandwidthOption](int data) {
             ProgramConfig::instance().setSettingItem(SettingItem::AUDIO_QUALITY, bandwidthOption.rawOptionList[data]);
@@ -579,10 +604,10 @@ void SettingActivity::onContentAvailable() {
                              // 非 Dash 模式，无法调整视频编码与音频质量
                              if (formatOption.rawOptionList[data] == 0) {
                                  selectorCodec->setVisibility(brls::Visibility::GONE);
-                                 selectorQuality->setVisibility(brls::Visibility::GONE);
+                                 selectorDefaultAudioQuality->setVisibility(brls::Visibility::GONE);
                              } else {
                                  selectorCodec->setVisibility(brls::Visibility::VISIBLE);
-                                 selectorQuality->setVisibility(brls::Visibility::VISIBLE);
+                                 selectorDefaultAudioQuality->setVisibility(brls::Visibility::VISIBLE);
                              }
                              return true;
                          });
@@ -590,7 +615,7 @@ void SettingActivity::onContentAvailable() {
     // 非 Dash 模式，无法调整视频编码与音频质量
     if (conf.getIntOption(SettingItem::VIDEO_FORMAT) == 0) {
         selectorCodec->setVisibility(brls::Visibility::GONE);
-        selectorQuality->setVisibility(brls::Visibility::GONE);
+        selectorDefaultAudioQuality->setVisibility(brls::Visibility::GONE);
     }
 
     /// Opencc
