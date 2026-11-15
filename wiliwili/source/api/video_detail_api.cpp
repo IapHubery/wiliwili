@@ -7,8 +7,33 @@
 #include "bilibili/result/video_detail_result.h"
 #include "bilibili/result/home_live_result.h"
 #include "bilibili/result/home_pgc_season_result.h"
+#include "utils/config_helper.hpp"
 
 namespace bilibili {
+
+namespace {
+
+// 未登录时 /x/player/wbi/playurl 只会返回 480P 及以下的 DASH 流，try_look 在该接口上不生效；
+// 非 WBI 的 /x/player/playurl 携带 try_look=1 时才能拿到 1080P 及以下的视频流。
+// 已登录用户仍走 WBI 接口，保持原有行为。
+void request_video_playurl(cpr::Parameters parameters, const std::function<void(VideoUrlResult)>& callback,
+                           const ErrorCallback& error) {
+    if (ProgramConfig::instance().hasLoginInfo()) {
+        HTTP::getResultWithWbiAsync<VideoUrlResult>(Api::PlayUrl2, parameters, callback, error);
+        return;
+    }
+    // 个别视频（如付费/独家内容）非 WBI 接口会直接报错，此时回退到 WBI 接口，
+    // 虽然只能拿到 480P，但至少保证视频可以播放。
+    auto wbiParameters = parameters;
+    parameters.Add({"try_look", "1"});
+    HTTP::getResultAsync<VideoUrlResult>(
+        Api::PlayUrl, parameters, callback, [wbiParameters, callback, error](const std::string& msg, int code) {
+            brls::Logger::warning("guest playurl failed: {} ({}), fallback to wbi playurl", msg, code);
+            HTTP::getResultWithWbiAsync<VideoUrlResult>(Api::PlayUrl2, wbiParameters, callback, error);
+        });
+}
+
+}  // namespace
 
 void BilibiliClient::get_video_detail(const std::string& bvid, const std::function<void(VideoDetailResult)>& callback,
                                       const ErrorCallback& error) {
@@ -79,40 +104,40 @@ void BilibiliClient::get_video_pagelist(uint64_t aid, const std::function<void(V
 
 void BilibiliClient::get_video_url(const std::string& bvid, uint64_t cid, int qn,
                                    const std::function<void(VideoUrlResult)>& callback, const ErrorCallback& error) {
-    HTTP::getResultWithWbiAsync<VideoUrlResult>(Api::PlayUrl2,
-                                         {{"bvid", std::string(bvid)},
-                                          {"cid", std::to_string(cid)},
-                                          {"gaia_source", "view-card"},
-                                          {"from_client", "BROWSER"},
-                                          {"is_main_page", "false"},
-                                          {"need_fragment", "false"},
-                                          {"isGaiaAvoided", "true"},
-                                          {"voice_balance", "1"},
-                                          {"web_location", "1315873"},
-                                          {"qn", std::to_string(qn)},
-                                          {"fourk", "1"},
-                                          {"fnval", FNVAL},
-                                          {"fnver", "0"}},
-                                         callback, error);
+    cpr::Parameters parameters = {{"bvid", std::string(bvid)},
+                                   {"cid", std::to_string(cid)},
+                                   {"gaia_source", "view-card"},
+                                   {"from_client", "BROWSER"},
+                                   {"is_main_page", "false"},
+                                   {"need_fragment", "false"},
+                                   {"isGaiaAvoided", "true"},
+                                   {"voice_balance", "1"},
+                                   {"web_location", "1315873"},
+                                   {"qn", std::to_string(qn)},
+                                   {"fourk", "1"},
+                                   {"fnval", FNVAL},
+                                   {"fnver", "0"}};
+    // 免登录查看1080P：未登录时改走非 WBI 接口并附加 try_look=1
+    request_video_playurl(std::move(parameters), callback, error);
 }
 
 void BilibiliClient::get_video_url(uint64_t aid, uint64_t cid, int qn, const std::function<void(VideoUrlResult)>& callback,
                                    const ErrorCallback& error) {
-    HTTP::getResultWithWbiAsync<VideoUrlResult>(Api::PlayUrl2,
-                                         {{"aid", std::to_string(aid)},
-                                          {"cid", std::to_string(cid)},
-                                          {"gaia_source", "view-card"},
-                                          {"from_client", "BROWSER"},
-                                          {"is_main_page", "false"},
-                                          {"need_fragment", "false"},
-                                          {"isGaiaAvoided", "true"},
-                                          {"voice_balance", "1"},
-                                          {"web_location", "1315873"},
-                                          {"qn", std::to_string(qn)},
-                                          {"fourk", "1"},
-                                          {"fnval", FNVAL},
-                                          {"fnver", "0"}},
-                                         callback, error);
+    cpr::Parameters parameters = {{"aid", std::to_string(aid)},
+                                   {"cid", std::to_string(cid)},
+                                   {"gaia_source", "view-card"},
+                                   {"from_client", "BROWSER"},
+                                   {"is_main_page", "false"},
+                                   {"need_fragment", "false"},
+                                   {"isGaiaAvoided", "true"},
+                                   {"voice_balance", "1"},
+                                   {"web_location", "1315873"},
+                                   {"qn", std::to_string(qn)},
+                                   {"fourk", "1"},
+                                   {"fnval", FNVAL},
+                                   {"fnver", "0"}};
+    // 免登录查看1080P：未登录时改走非 WBI 接口并附加 try_look=1
+    request_video_playurl(std::move(parameters), callback, error);
 }
 
 void BilibiliClient::get_video_url_cast(uint64_t oid, uint64_t cid, int type, int qn, const std::string& csrf,

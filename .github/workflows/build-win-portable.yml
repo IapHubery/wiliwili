@@ -1,0 +1,119 @@
+name: Build Windows Portable
+
+on:
+  workflow_dispatch:            # 手动触发
+  push:
+    tags: [ 'v*' ]              # 推送 v* 标签时触发并发布 Release
+
+jobs:
+  build-win:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      # 1. 安装 MSYS2/MinGW64 工具链
+      - uses: msys2/setup-msys2@v2
+        id: msys2
+        with:
+          msystem: mingw64
+          path-type: inherit
+          cache: false
+          install: >-
+            mingw-w64-x86_64-ninja
+            mingw-w64-x86_64-pkgconf
+            mingw-w64-x86_64-cc
+            unzip
+            zip
+
+      # 2. 检出源码（必须 recursive，wiliwili 依赖大量 submodule）
+      - uses: actions/checkout@v6
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      # 3. 安装项目自编译的 mpv 包（官方提供，含 libmpv-2.dll）
+      - name: Install mpv
+        run: |
+          curl -LO https://github.com/xfangfang/wiliwili/releases/download/v0.1.0/${MINGW_PACKAGE_PREFIX}-mpv-0.40.0-2-any.pkg.tar.zst
+          pacman -U --noconfirm *.pkg.tar.zst
+
+      # 4. 编译静态 libwebp
+      - name: Build libwebp
+        run: |
+          curl -sL https://github.com/webmproject/libwebp/archive/v1.6.0.tar.gz | tar zxf - -C /tmp
+          cmake -B build-libwebp -S /tmp/libwebp-1.6.0 -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX=${MINGW_PREFIX} \
+            -DBUILD_SHARED_LIBS=OFF \
+            -DWEBP_BUILD_ANIM_UTILS=OFF -DWEBP_BUILD_CWEBP=OFF \
+            -DWEBP_BUILD_DWEBP=OFF  -DWEBP_BUILD_GIF2WEBP=OFF \
+            -DWEBP_BUILD_IMG2WEBP=OFF -DWEBP_BUILD_VWEBP=OFF \
+            -DWEBP_BUILD_WEBPINFO=OFF -DWEBP_BUILD_WEBPMUX=OFF \
+            -DWEBP_BUILD_LIBWEBPMUX=OFF -DWEBP_BUILD_EXTRAS=OFF
+          cmake --build build-libwebp
+          cmake --install build-libwebp
+
+      # 5. 编译静态 curl（Windows 上走 schannel，无需 OpenSSL）
+      - name: Build curl
+        run: |
+          curl -sL https://curl.se/download/curl-8.7.1.tar.xz | tar Jxf - -C /tmp
+          cmake -B build-curl -S /tmp/curl-8.7.1 -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX=${MINGW_PREFIX} \
+            -DBUILD_SHARED_LIBS=OFF \
+            -DHTTP_ONLY=ON \
+            -DCURL_USE_SCHANNEL=ON \
+            -DCURL_DISABLE_PROGRESS_METER=ON \
+            -DBUILD_CURL_EXE=OFF \
+            -DBUILD_TESTING=OFF \
+            -DBUILD_LIBCURL_DOCS=OFF \
+            -DUSE_LIBIDN2=OFF \
+            -DUSE_WIN32_IDN=ON \
+            -DCURL_USE_LIBSSH2=OFF \
+            -DCURL_USE_LIBPSL=OFF \
+            -DZLIB_USE_STATIC_LIBS=ON
+          cmake --build build-curl
+          cmake --install build-curl
+
+      # 6. 编译 wiliwili 主程序（MPV_BUNDLE_DLL 把 libmpv-2.dll 嵌入 exe 资源）
+      - name: Build wiliwili
+        run: |
+          BRLS_GLFW=library/borealis/library/lib/extern/glfw
+          cmake -P ${BRLS_GLFW}/CMake/GenerateMappings.cmake \
+                ${BRLS_GLFW}/src/mappings.h.in ${BRLS_GLFW}/src/mappings.h
+          cmake -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DPLATFORM_DESKTOP=ON \
+            -DWIN32_TERMINAL=OFF \
+            -DUSE_SYSTEM_CURL=ON \
+            -DUSE_LIBROMFS=ON \
+            -DUSE_D3D11=ON \
+            -DZLIB_USE_STATIC_LIBS=ON \
+            -DMPV_BUNDLE_DLL=${MINGW_PREFIX}/bin/libmpv-2.dll \
+            -DVERSION_BUILD=${{ github.run_number }}
+          cmake --build build
+          cp -a README.md build/
+
+      # 7. 打包为免安装 zip
+      - name: Package portable zip
+        run: |
+          mkdir -p dist/wiliwili
+          cp build/wiliwili.exe dist/wiliwili/
+          cp build/README.md  dist/wiliwili/
+          cd dist
+          zip -r -9 ../wiliwili-Windows-x86_64-portable.zip wiliwili
+
+      # 8. 上传为 artifact（任意一次运行都能在 Actions 页面下载）
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wiliwili-Windows-x86_64-portable
+          path: wiliwili-Windows-x86_64-portable.zip
+
+      # 9. 推送 v* 标签时自动发布 Release
+      - if: startsWith(github.ref, 'refs/tags/')
+        uses: ncipollo/release-action@v1
+        with:
+          allowUpdates: true
+          artifacts: wiliwili-Windows-x86_64-portable.zip
+          token: ${{ secrets.GITHUB_TOKEN }}

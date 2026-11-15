@@ -176,7 +176,8 @@ public:
 
         if (quality > 80) {
             item->vipLabel->setVisibility(brls::Visibility::VISIBLE);
-        } else if (quality >= 32) {
+            // 免登录1080P（参考 PiliPlus try_look）：未登录最高可选 1080P，
+            // 超过 1080P 的画质才需要登录
             if (!login) item->loginLabel->setVisibility(brls::Visibility::VISIBLE);
         }
 
@@ -472,14 +473,14 @@ void BasePlayerActivity::setVideoQuality() {
                 code = 64;
             }
 #endif
-            BasePlayerActivity::defaultQuality = code;
-            ProgramConfig::instance().setSettingItem(SettingItem::VIDEO_QUALITY, code);
-
-            // 如果未登录选择了大于等于480P清晰度的视频
-            if (ProgramConfig::instance().getCSRF().empty() && defaultQuality >= 32) {
+            // 免登录只能选择不超过 1080P 的画质，超过 1080P 仍需登录
+            if (ProgramConfig::instance().getCSRF().empty() && code > 80) {
                 DialogHelper::showDialog("wiliwili/home/common/no_login"_i18n);
                 return;
             }
+
+            BasePlayerActivity::defaultQuality = code;
+            ProgramConfig::instance().setSettingItem(SettingItem::VIDEO_QUALITY, code);
 
             this->updateVideoLink();
         },
@@ -597,9 +598,15 @@ void BasePlayerActivity::onVideoPlayUrl(const bilibili::VideoUrlResult& result) 
         // dash
         brls::Logger::debug("Video type: dash");
 
+        // 以用户选择的清晰度（defaultQuality）为准来挑选 DASH 流。
+        // 未登录且开启 try_look 时，服务器返回的 quality 字段可能低于 DASH 中实际包含的画质
+        // （例如字段是 720P，但流里含 1080P），因此不能直接拿 quality 字段做目标；
+        // 也不能按 DASH 最高流强制提升，否则用户选较低画质时会被自动改回高清。
+        int desiredQualityBase = defaultQuality > 0 ? defaultQuality : result.quality;
+
         // 找到当前可用的清晰度
         for (const auto& i : result.dash.video) {
-            int desiredQuality = result.quality;
+            int desiredQuality = desiredQualityBase;
             // 若设置了过高的清晰度, 自动切换到合适的清晰度, 默认为 128 (即无限制)
             if (i.height > i.width) {
                 desiredQuality = std::min(desiredQuality, portraitQualityMax);
@@ -619,6 +626,20 @@ void BasePlayerActivity::onVideoPlayUrl(const bilibili::VideoUrlResult& result) 
             if (i.id == videoUrlResult.quality) {
                 codecs.emplace_back(i);
             }
+        }
+        if (codecs.empty()) {
+            // 兜底：目标清晰度不在返回的流里（例如用户设置的清晰度低于视频最低画质），
+            // 退回返回流中的最低清晰度，避免下面访问 codecs[0] 越界
+            int lowestQuality = result.dash.video[0].id;
+            for (const auto& i : result.dash.video) {
+                lowestQuality = std::min(lowestQuality, i.id);
+            }
+            for (const auto& i : result.dash.video) {
+                if (i.id == lowestQuality) {
+                    codecs.emplace_back(i);
+                }
+            }
+            videoUrlResult.quality = lowestQuality;
         }
 
         // 匹配当前设定的视频编码

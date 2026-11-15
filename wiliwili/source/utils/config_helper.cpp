@@ -562,9 +562,10 @@ void ProgramConfig::load() {
     // 初始化视频清晰度
     VideoDetail::defaultQuality = getSettingItem(SettingItem::VIDEO_QUALITY,
                                                  WILI_VIDEO_QUALITY_DEFAULT);
-    if (!hasLoginInfo()) {
-        // 用户未登录时跟随官方将默认清晰度设置到 360P
-        VideoDetail::defaultQuality = 16;
+    if (!hasLoginInfo() && VideoDetail::defaultQuality > 80) {
+        // 免登录最高只能观看 1080P：未登录时把默认清晰度限制在 1080P 以内，
+        // 但保留用户手动选择过的更低清晰度（如 720P / 480P）
+        VideoDetail::defaultQuality = 80;
     }
 
     // 加载完成后自动播放
