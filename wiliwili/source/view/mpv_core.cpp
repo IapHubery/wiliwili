@@ -308,7 +308,14 @@ void MPVCore::init() {
     mpvSetOptionString(mpv, "config-dir", confDir.c_str());
     mpvSetOptionString(mpv, "gpu-shader-cache-dir", fmt::format("{}/cache", confDir).c_str());
     mpvSetOptionString(mpv, "ytdl", "no");
+#if defined(__SWITCH__) || defined(__PSV__) || defined(PS4)
+    // 主机 / 掌机的音频输出固定为立体声
     mpvSetOptionString(mpv, "audio-channels", "stereo");
+#endif
+    // 音频输出缓冲：mpv 默认只有 200ms，在部分 Windows 机器上（尤其是 HDMI / DP 音频、
+    // 显卡驱动存在 DPC 延迟时）音频线程来不及取数据会出现间歇性爆音（电流滋滋声）。
+    // 适当增大缓冲可以吸收系统调度抖动，避免音频欠载。
+    mpvSetOptionString(mpv, "audio-buffer", "0.4");
     mpvSetOptionString(mpv, "idle", "yes");
     mpvSetOptionString(mpv, "loop-file", "no");
     mpvSetOptionString(mpv, "osd-level", "0");
