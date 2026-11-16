@@ -68,7 +68,25 @@ public:
     std::string uname;
     std::string mid;
 };
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(DynamicUpResult, has_update, face, uname, mid);
+inline void to_json(nlohmann::json& j, const DynamicUpResult& u) {
+    j = nlohmann::json{
+        {"has_update", u.has_update}, {"face", u.face}, {"uname", u.uname}, {"mid", u.mid}};
+}
+inline void from_json(const nlohmann::json& j, DynamicUpResult& u) {
+    if (j.contains("has_update") && j.at("has_update").is_boolean())
+        u.has_update = j.at("has_update").get<bool>();
+    if (j.contains("face") && j.at("face").is_string()) u.face = j.at("face").get<std::string>();
+    if (j.contains("uname") && j.at("uname").is_string()) u.uname = j.at("uname").get<std::string>();
+    // 关注列表接口返回的 mid 是字符串，其它接口可能是数字，这里两种都兼容
+    auto it = j.find("mid");
+    if (it != j.end() && !it->is_null()) {
+        if (it->is_string()) {
+            u.mid = it->get<std::string>();
+        } else if (it->is_number()) {
+            u.mid = std::to_string(it->get<uint64_t>());
+        }
+    }
+}
 
 typedef std::vector<DynamicUpResult> DynamicUpListResult;
 

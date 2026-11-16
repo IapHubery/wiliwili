@@ -98,7 +98,13 @@ public:
             item->setSelected(true);
         } else {
             // 选择具体的某个up主
-            userSelectedEvent.fire(std::stoull(list[index - 1].mid));
+            uint64_t mid = 0;
+            try {
+                mid = std::stoull(list[index - 1].mid);
+            } catch (...) {
+                brls::Logger::warning("dynamic up: invalid mid '{}'", list[index - 1].mid);
+            }
+            userSelectedEvent.fire(mid);
             // 移除小红点
             auto* item = dynamic_cast<DynamicUserInfoView*>(recycler->getGridItemByIndex(index));
             if (!item) return;
