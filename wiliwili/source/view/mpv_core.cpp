@@ -316,6 +316,9 @@ void MPVCore::init() {
     // 显卡驱动存在 DPC 延迟时）音频线程来不及取数据会出现间歇性爆音（电流滋滋声）。
     // 适当增大缓冲可以吸收系统调度抖动，避免音频欠载。
     mpvSetOptionString(mpv, "audio-buffer", "0.4");
+    // 默认限幅（参考 PiliPlus）：B 站音轨峰值常接近满刻度，重采样或混音后容易过冲，
+    // 被系统混音器硬削波后听起来就是「滋滋」的破音，这里保留 0.95 的余量
+    mpvSetOptionString(mpv, "af", "alimiter=level_in=1:limit=0.95:level=0");
     // 暂停 / 拖动进度 / 切换清晰度时，避免音频设备反复停止与重启；
     // HDMI / AVR 等设备在音频流重启时经常会产生「啪」的爆音
     mpvSetOptionString(mpv, "audio-stream-silence", "yes");

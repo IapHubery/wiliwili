@@ -13,6 +13,7 @@
 #include "utils/config_helper.hpp"
 #include "utils/dialog_helper.hpp"
 #include "utils/activity_helper.hpp"
+#include "utils/local_store.hpp"
 #include "utils/image_helper.hpp"
 #include "fragment/player_collection.hpp"
 #include "fragment/player_fragments.hpp"
@@ -180,6 +181,29 @@ void PlayerActivity::onContentAvailable() {
         this->showCollectionDialog(videoDetailResult.aid, (int)VideoType::Plain);
         return true;
     });
+
+    // 稍后再看按钮（未登录时保存到本地列表，登录后由官方接口管理）
+    this->btnLater->setImageFromSVGRes("svg/widget-bookmark.svg");
+    if (ProgramConfig::instance().hasLoginInfo()) {
+        this->btnLater->getParent()->setVisibility(brls::Visibility::GONE);
+    } else {
+        this->btnLater->getParent()->registerClickAction([this](...) {
+            LocalVideoItem item;
+            item.bvid     = this->videoDetailResult.bvid;
+            item.aid      = this->videoDetailResult.aid;
+            item.cid      = this->videoDetailPage.cid;
+            item.title    = this->videoDetailResult.title;
+            item.cover    = this->videoDetailResult.pic;
+            item.author   = this->videoDetailResult.owner.name;
+            item.duration = this->videoDetailResult.duration;
+            item.progress = (int)MPVCore::instance().video_progress;
+            item.view_at  = (int64_t)wiliwili::getUnixTime();
+            bool added    = LocalStore::instance().toggleLater(item);
+            DialogHelper::showDialog(added ? "wiliwili/mine/local_later_added"_i18n
+                                           : "wiliwili/mine/local_later_removed"_i18n);
+            return true;
+        });
+    }
 
     // 二维码按钮
     this->btnQR->getParent()->registerClickAction([this](...) {

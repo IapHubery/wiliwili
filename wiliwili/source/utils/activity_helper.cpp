@@ -14,6 +14,7 @@
 #include "activity/gallery_activity.hpp"
 #include "activity/dlna_activity.hpp"
 #include "activity/dynamic_activity.hpp"
+#include "activity/space_activity.hpp"
 #include "fragment/mine_collection_video_list.hpp"
 #include "fragment/inbox_view.hpp"
 #include "utils/activity_helper.hpp"
@@ -121,5 +122,11 @@ void Intent::openDLNA() {
 
 void Intent::openActivity(const std::string& id) {
     auto activity = new DynamicActivity(id);
+    brls::Application::pushActivity(activity, brls::TransitionAnimation::NONE);
+}
+
+void Intent::openUserSpace(const std::string& mid) {
+    if (mid.empty() || mid == "0") return;
+    auto activity = new SpaceActivity(mid);
     brls::Application::pushActivity(activity, brls::TransitionAnimation::NONE);
 }

@@ -142,6 +142,9 @@ void PlayerSeasonActivity::onContentAvailable() {
         return true;
     });
 
+    // 番剧暂不支持本地「稍后再看」，隐藏该按钮
+    this->btnLater->getParent()->setVisibility(brls::Visibility::GONE);
+
     this->videoUserInfo->registerClickAction([this](...) {
         if (!DialogHelper::checkLogin()) return true;
         this->followSeason(this->seasonInfo.season_id, !this->seasonStatus.follow);

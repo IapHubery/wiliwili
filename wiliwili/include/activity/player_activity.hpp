@@ -121,6 +121,7 @@ protected:
     BRLS_BIND(SVGImage, btnAgree, "video/btn/agree");
     BRLS_BIND(SVGImage, btnCoin, "video/btn/coin");
     BRLS_BIND(SVGImage, btnFavorite, "video/btn/favorite");
+    BRLS_BIND(SVGImage, btnLater, "video/btn/later");
     BRLS_BIND(SVGImage, btnQR, "video/btn/qr");
     BRLS_BIND(brls::Label, labelAgree, "video/label/agree");
     BRLS_BIND(brls::Label, labelCoin, "video/label/coin");

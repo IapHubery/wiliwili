@@ -150,7 +150,8 @@ std::shared_ptr<ImageHelper> ImageHelper::with(brls::Image* view) {
 }
 
 void ImageHelper::load(const std::string &url) {
-    this->imageUrl = bilibili::HTTP::VERIFY.verify ? url :pystring::replace(url, "https", "http", 1);
+    this->imageUrl = bilibili::HTTP::VERIFY.verify ? pystring::replace(url, "http://", "https://", 1)
+                                                : pystring::replace(url, "https://", "http://", 1);
 
 #ifdef BOREALIS_USE_GXM
     std::vector<std::string> urls = pystring::rsplit(this->imageUrl, "@", 1);

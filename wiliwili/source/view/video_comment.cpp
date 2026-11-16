@@ -11,6 +11,7 @@
 #include "utils/number_helper.hpp"
 #include "utils/string_helper.hpp"
 #include "utils/config_helper.hpp"
+#include "utils/activity_helper.hpp"
 
 using namespace brls::literals;
 
@@ -98,6 +99,13 @@ VideoComment::VideoComment() {
     this->registerColorXMLAttribute("mainTextColor", [this](NVGcolor value) { this->setMainTextColor(value); });
 
     this->registerFloatXMLAttribute("maxRows", [this](float value) { this->setMaxRows((size_t)value); });
+
+    // 点击头像 / 昵称进入用户空间（未登录也可以）
+    this->userInfo->registerClickAction([this](brls::View*) {
+        Intent::openUserSpace(std::to_string(this->comment_data.member.mid));
+        return true;
+    });
+    this->userInfo->addGestureRecognizer(new brls::TapGestureRecognizer(this->userInfo));
 }
 
 VideoComment::~VideoComment() { brls::Logger::verbose("View VideoComment: delete"); }

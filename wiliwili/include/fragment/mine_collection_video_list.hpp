@@ -30,6 +30,9 @@ public:
 
     void requestCollectionList();
 
+    /// 数据到达后更新 UI（本地模式与网络模式共用）
+    void onCollectionVideoList(const bilibili::CollectionVideoListResultWrapper& result);
+
 private:
     bilibili::CollectionResult collectionData;
 

@@ -15,6 +15,7 @@
 #include "utils/config_helper.hpp"
 #include "utils/dialog_helper.hpp"
 #include "utils/number_helper.hpp"
+#include "utils/local_store.hpp"
 #include "presenter/comment_related.hpp"
 #include "utils/shortcut_helper.hpp"
 #include "view/qr_image.hpp"
@@ -400,7 +401,26 @@ void BasePlayerActivity::setCommonData() {
 }
 
 void BasePlayerActivity::showCollectionDialog(uint64_t id, int videoType) {
-    if (!DialogHelper::checkLogin()) return;
+    if (!DialogHelper::checkLogin()) {
+        // 未登录：收藏到本地收藏夹
+        LocalVideoItem item;
+        item.aid      = id;
+        item.bvid     = this->videoDetailResult.bvid;
+        item.cid      = this->videoDetailPage.cid;
+        item.title    = this->videoDetailResult.title;
+        item.cover    = this->videoDetailResult.pic;
+        item.author   = this->videoDetailResult.owner.name;
+        item.duration = this->videoDetailResult.duration;
+        item.view_at  = (int64_t)wiliwili::getUnixTime();
+        if (item.bvid.empty()) {
+            DialogHelper::showDialog("wiliwili/home/common/no_login"_i18n);
+            return;
+        }
+        bool added = LocalStore::instance().toggleFavorite(item);
+        DialogHelper::showDialog(added ? "wiliwili/mine/local_fav_added"_i18n
+                                       : "wiliwili/mine/local_fav_removed"_i18n);
+        return;
+    }
     auto playerCollection = new PlayerCollection(id, videoType);
     auto dialog           = new brls::Dialog(playerCollection);
     dialog->addButton("wiliwili/home/common/save"_i18n, [this, id, videoType, playerCollection]() {
@@ -533,6 +553,21 @@ void BasePlayerActivity::onVideoPlayUrl(const bilibili::VideoUrlResult& result) 
 
     // 有效期 110 分钟
     videoDeadline = std::chrono::system_clock::now() + std::chrono::seconds(6600);
+
+    // 未登录时把播放记录保存到本地（我的 - 历史记录）
+    if (!ProgramConfig::instance().hasLoginInfo() && !this->videoDetailResult.bvid.empty()) {
+        LocalVideoItem item;
+        item.bvid     = this->videoDetailResult.bvid;
+        item.aid      = this->videoDetailResult.aid;
+        item.cid      = this->videoDetailPage.cid;
+        item.title    = this->videoDetailResult.title;
+        item.cover    = this->videoDetailResult.pic;
+        item.author   = this->videoDetailResult.owner.name;
+        item.duration = this->videoDetailResult.duration;
+        item.progress = this->getProgress();
+        item.view_at  = (int64_t)wiliwili::getUnixTime();
+        LocalStore::instance().addHistory(item);
+    }
 
     // 获取预设的跳转位置
     int start    = this->getProgress();

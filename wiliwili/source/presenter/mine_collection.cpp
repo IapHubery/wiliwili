@@ -4,6 +4,8 @@
 
 #include "presenter/mine_collection.hpp"
 #include "utils/config_helper.hpp"
+#include "utils/local_store.hpp"
+#include "utils/number_helper.hpp"
 #include "borealis/core/logger.hpp"
 #include "bilibili.h"
 #include "borealis/core/i18n.hpp"
@@ -26,7 +28,24 @@ void MineCollectionRequest::requestData(bool refresh) {
     if (hasMore) {
         auto mid = ProgramConfig::instance().getUserID();
         if (mid.empty() || mid == "0") {
-            this->onError("wiliwili/home/common/no_login"_i18n);
+            // 未登录：本地收藏夹
+            hasMore = false;
+            bilibili::CollectionListResultWrapper result;
+            result.index    = 1;
+            result.has_more = false;
+            result.count    = 1;
+
+            auto favorites = LocalStore::instance().getFavorites();
+            bilibili::CollectionResult folder;
+            folder.id          = 0;
+            folder.title       = "wiliwili/mine/local_favorites"_i18n;
+            folder.media_count = (unsigned int)favorites.size();
+            folder.cover       = favorites.empty() ? "" : favorites.front().cover;
+            folder.ctime       = (unsigned int)wiliwili::getUnixTime();
+            folder.upper.name  = "wiliwili/mine/local_favorites"_i18n;
+            result.list.push_back(folder);
+
+            this->onCollectionList(result);
             return;
         }
         this->requestCollectionList(mid, index);

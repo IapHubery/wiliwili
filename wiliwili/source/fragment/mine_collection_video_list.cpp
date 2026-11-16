@@ -11,6 +11,7 @@
 #include "view/text_box.hpp"
 #include "utils/image_helper.hpp"
 #include "utils/activity_helper.hpp"
+#include "utils/local_store.hpp"
 #include "bilibili.h"
 #include "utils/shortcut_helper.hpp"
 
@@ -104,7 +105,7 @@ MineCollectionVideoList::MineCollectionVideoList(const bilibili::CollectionResul
     requestType    = type;
     this->labelTitle->setText(data.title);
     this->labelSubtitle->setText(fmt::format("{}{}", data.media_count, "wiliwili/mine/num"_i18n));
-    ImageHelper::with(this->imageCover)->load(data.cover);
+    if (!data.cover.empty()) ImageHelper::with(this->imageCover)->load(data.cover);
 
     this->requestCollectionList();
 }
@@ -117,6 +118,29 @@ brls::View* MineCollectionVideoList::create() { return new MineCollectionVideoLi
 
 void MineCollectionVideoList::requestCollectionList() {
     if (!hasMore) return;
+
+    // 未登录：收藏夹 id 为 0，使用本地收藏数据
+    if (collectionData.id == 0) {
+        bilibili::CollectionVideoListResultWrapper result;
+        result.index    = 1;
+        result.has_more = false;
+        result.info     = collectionData;
+        for (const auto& i : LocalStore::instance().getFavorites()) {
+            bilibili::CollectionVideoResult v;
+            v.type       = 2;  // 普通视频
+            v.bvid       = i.bvid;
+            v.title      = i.title;
+            v.cover      = i.cover;
+            v.upper.name = i.author;
+            v.duration   = i.duration;
+            v.pubtime    = (unsigned int)i.view_at;
+            result.medias.push_back(v);
+        }
+        result.info.media_count = (unsigned int)result.medias.size();
+        hasMore                 = false;
+        this->onCollectionVideoList(result);
+        return;
+    }
 
     brls::Logger::debug("requestCollectionList id: {}, type: {}, index: {}", collectionData.id, requestType,
                         requestIndex);
@@ -133,20 +157,7 @@ void MineCollectionVideoList::requestCollectionList() {
                 }
                 requestIndex++;
 
-                auto* datasource = dynamic_cast<DataSourceCollectionVideoList*>(recyclingGrid->getDataSource());
-                if (datasource && result.index != 1) {
-                    if (!result.medias.empty()) {
-                        datasource->appendData(result.medias);
-                        recyclingGrid->notifyDataChanged();
-                    }
-                } else {
-                    recyclingGrid->setDataSource(new DataSourceCollectionVideoList(result.medias));
-                    labelTitle->setText(result.info.title);
-                    labelSubtitle->setText(fmt::format("{}{} · {}: {}", result.info.media_count,
-                                                       "wiliwili/mine/num"_i18n, "wiliwili/mine/creator"_i18n,
-                                                       result.info.upper.name));
-                    ImageHelper::with(this->imageCover)->load(result.info.cover);
-                }
+                this->onCollectionVideoList(result);
             });
         },
         [ASYNC_TOKEN](BILI_ERR) {
@@ -155,4 +166,20 @@ void MineCollectionVideoList::requestCollectionList() {
                 this->recyclingGrid->setError(error);
             });
         });
+}
+
+void MineCollectionVideoList::onCollectionVideoList(const bilibili::CollectionVideoListResultWrapper& result) {
+    auto* datasource = dynamic_cast<DataSourceCollectionVideoList*>(recyclingGrid->getDataSource());
+    if (datasource && result.index != 1) {
+        if (!result.medias.empty()) {
+            datasource->appendData(result.medias);
+            recyclingGrid->notifyDataChanged();
+        }
+    } else {
+        recyclingGrid->setDataSource(new DataSourceCollectionVideoList(result.medias));
+        labelTitle->setText(result.info.title);
+        labelSubtitle->setText(fmt::format("{}{} · {}: {}", result.info.media_count, "wiliwili/mine/num"_i18n,
+                                           "wiliwili/mine/creator"_i18n, result.info.upper.name));
+        if (!result.info.cover.empty()) ImageHelper::with(this->imageCover)->load(result.info.cover);
+    }
 }

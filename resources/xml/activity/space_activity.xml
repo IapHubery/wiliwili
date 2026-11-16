@@ -1,0 +1,66 @@
+<brls:AppletFrame
+        iconInterpolation="linear"
+        headerHidden="true"
+        footerHidden="false">
+    <brls:Box
+            axis="column"
+            width="auto"
+            height="auto"
+            grow="1">
+
+        <brls:Box
+                axis="row"
+                width="100%"
+                height="auto"
+                paddingTop="30"
+                paddingLeft="40"
+                paddingRight="40"
+                paddingBottom="20"
+                alignItems="center">
+
+            <brls:Image
+                    id="space/avatar"
+                    width="96"
+                    height="96"
+                    cornerRadius="48"
+                    scalingType="fit"
+                    borderThickness="4"
+                    borderColor="@theme/color/grey_1"
+                    image="@res/pictures/default_avatar.png"/>
+
+            <brls:Box
+                    axis="column"
+                    marginLeft="24"
+                    width="auto"
+                    height="auto">
+                <brls:Label
+                        id="space/name"
+                        width="auto"
+                        height="auto"
+                        fontSize="26"/>
+                <brls:Label
+                        id="space/desc"
+                        width="auto"
+                        height="auto"
+                        marginTop="8"
+                        fontSize="16"
+                        textColor="@theme/font/grey"/>
+            </brls:Box>
+        </brls:Box>
+
+        <RecyclingGrid
+                paddingLeft="30"
+                paddingRight="30"
+                itemHeight="250"
+                grow="1"
+                preFetchLine="1"
+                spanCount="@style/wiliwili/grid/span/4"
+                wireframe="false"
+                id="space/grid"/>
+
+        <ButtonClose
+                positionType="absolute"
+                positionTop="20"
+                positionRight="20"/>
+    </brls:Box>
+</brls:AppletFrame>
