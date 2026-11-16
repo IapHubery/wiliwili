@@ -72,6 +72,7 @@ class UserResult;
 class HistoryVideoListCursor;
 class HistoryVideoResultWrapper;
 class UserUploadedVideoResultWrapper;
+class UserSpaceInfo;
 class SeasonResultWrapper;
 class SeasonRecommendWrapper;
 class SeasonStatusResult;
@@ -232,6 +233,11 @@ public:
     static void get_my_bangumi(const std::string& mid, size_t type, size_t pn, size_t ps = 20,
                                const std::function<void(BangumiCollectionWrapper)>& callback = nullptr,
                                const ErrorCallback& error                                    = nullptr);
+
+    /// 用户空间用户信息
+    static void get_space_user_info(const std::string& mid,
+                                    const std::function<void(UserSpaceInfo)>& callback = nullptr,
+                                    const ErrorCallback& error                        = nullptr);
 
     /// get user's upload videos
     static void get_user_videos(uint64_t mid, int pn, int ps,

@@ -77,6 +77,23 @@ inline void from_json(const nlohmann::json& nlohmann_json_j, QrLoginInfoResultV2
     NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM, refresh_token));
 }
 
+/// 用户空间用户信息（/x/space/wbi/acc/info）
+class UserSpaceInfo {
+public:
+    uint64_t mid = 0;
+    std::string name;
+    std::string face;
+    std::string sign;
+    int level = 0;
+};
+inline void from_json(const nlohmann::json& j, UserSpaceInfo& u) {
+    u.mid   = j.value("mid", 0ULL);
+    u.name  = j.value("name", std::string{});
+    u.face  = j.value("face", std::string{});
+    u.sign  = j.value("sign", std::string{});
+    u.level = j.value("level", 0);
+}
+
 class UserUploadedVideoResult {
 public:
     int comment;

@@ -338,16 +338,36 @@ void BilibiliClient::get_my_bangumi(const std::string& mid, size_t type, size_t 
 }
 
 /// get user's upload videos
+void BilibiliClient::get_space_user_info(const std::string& mid,
+                                         const std::function<void(UserSpaceInfo)>& callback,
+                                         const ErrorCallback& error) {
+    HTTP::getResultWithWbiAsync<UserSpaceInfo>(Api::SpaceUserInfo,
+                                               {
+                                                   {"mid", mid},
+                                                   {"token", ""},
+                                                   {"platform", "web"},
+                                                   {"web_location", "1550101"},
+                                               },
+                                               callback, error);
+}
+
 void BilibiliClient::get_user_videos(uint64_t mid, int pn, int ps,
                                      const std::function<void(UserUploadedVideoResultWrapper)>& callback,
                                      const ErrorCallback& error) {
-    HTTP::getResultAsync<UserUploadedVideoResultWrapper>(Api::UserUploadedVideo,
-                                                         {
-                                                             {"mid", std::to_string(mid)},
-                                                             {"ps", std::to_string(ps)},
-                                                             {"pn", std::to_string(pn)},
-                                                         },
-                                                         callback, error);
+    // 空间投稿接口需要 WBI 签名，否则会返回 412
+    HTTP::getResultWithWbiAsync<UserUploadedVideoResultWrapper>(Api::UserUploadedVideo,
+                                                                {
+                                                                    {"mid", std::to_string(mid)},
+                                                                    {"ps", std::to_string(ps)},
+                                                                    {"pn", std::to_string(pn)},
+                                                                    {"tid", "0"},
+                                                                    {"order", "pubdate"},
+                                                                    {"order_avoided", "true"},
+                                                                    {"keyword", ""},
+                                                                    {"platform", "web"},
+                                                                    {"web_location", "1550101"},
+                                                                },
+                                                                callback, error);
 }
 
 void BilibiliClient::get_user_videos2(uint64_t mid, int pn, int ps,

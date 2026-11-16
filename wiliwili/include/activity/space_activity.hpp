@@ -26,8 +26,11 @@ public:
 
 private:
     std::string mid;
-    int page     = 1;
-    bool hasMore = true;
+    std::string userSign;
+    uint64_t follower  = 0;
+    uint64_t following = 0;
+    int page           = 1;
+    bool hasMore       = true;
 
     BRLS_BIND(brls::Image, avatar, "space/avatar");
     BRLS_BIND(brls::Label, nameLabel, "space/name");
@@ -37,4 +40,5 @@ private:
     void requestUserInfo();
     void requestVideos(bool refresh = false);
     void onVideos(const bilibili::UserUploadedVideoResultWrapper& result);
+    void updateDesc();
 };

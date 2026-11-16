@@ -217,8 +217,15 @@ void PlayerActivity::onContentAvailable() {
         return true;
     });
 
-    // 用户头像框
+    // 用户头像/昵称：进入用户空间
     this->videoUserInfo->registerClickAction([this](...) {
+        Intent::openUserSpace(std::to_string(this->videoDetailResult.owner.mid));
+        return true;
+    });
+
+    // 关注 / 取消关注：点击右侧的「关注」按钮
+    auto* userHintBox = this->videoUserInfo->getHintBox();
+    userHintBox->registerClickAction([this](...) {
         if (!DialogHelper::checkLogin()) return true;
         if (this->userDetailResult.following) {
             auto dialog = new brls::Dialog("wiliwili/player/not_follow"_i18n);
@@ -232,6 +239,7 @@ void PlayerActivity::onContentAvailable() {
         }
         return true;
     });
+    userHintBox->addGestureRecognizer(new brls::TapGestureRecognizer(userHintBox));
 
     // 隐藏跳过片头片尾，因为这个是番剧专属的设置
     this->video->hideSkipOpeningCreditsSetting();

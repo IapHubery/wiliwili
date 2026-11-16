@@ -42,6 +42,8 @@ public:
 
     brls::Label* getLabelMisc();
 
+    brls::Box* getHintBox();
+
     void setHintType(InfoHintType type);
 
 private:

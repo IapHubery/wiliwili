@@ -60,20 +60,29 @@ void SpaceActivity::onContentAvailable() {
     this->requestVideos(true);
 }
 
+void SpaceActivity::updateDesc() {
+    std::string desc;
+    if (!this->userSign.empty()) desc = this->userSign + "\n";
+    if (this->follower > 0 || this->following > 0) {
+        desc += fmt::format("粉丝 {}  关注 {}", this->follower, this->following);
+    }
+    if (desc.empty()) desc = fmt::format("UID: {}", this->mid);
+    this->descLabel->setText(desc);
+}
+
 void SpaceActivity::requestUserInfo() {
     {
         ASYNC_RETAIN
-        BILI::get_user_cards(
-            {this->mid},
-            [ASYNC_TOKEN](const bilibili::UserCardListResult& result) {
-                if (result.empty()) return;
-                auto user = result[0];
+        BILI::get_space_user_info(
+            this->mid,
+            [ASYNC_TOKEN](const bilibili::UserSpaceInfo& user) {
                 brls::sync([ASYNC_TOKEN, user]() {
                     ASYNC_RELEASE
                     if (!user.face.empty())
                         ImageHelper::with(this->avatar)->load(user.face + ImageHelper::face_large_ext);
                     this->nameLabel->setText(user.name);
-                    this->descLabel->setText(fmt::format("UID: {}", user.mid));
+                    this->userSign = user.sign;
+                    this->updateDesc();
                 });
             },
             [](BILI_ERR) {});
@@ -86,7 +95,9 @@ void SpaceActivity::requestUserInfo() {
             [ASYNC_TOKEN](const bilibili::UserRelationStat& stat) {
                 brls::sync([ASYNC_TOKEN, stat]() {
                     ASYNC_RELEASE
-                    this->descLabel->setText(fmt::format("粉丝 {}  关注 {}", stat.follower, stat.following));
+                    this->follower  = stat.follower;
+                    this->following = stat.following;
+                    this->updateDesc();
                 });
             },
             [](BILI_ERR) {});

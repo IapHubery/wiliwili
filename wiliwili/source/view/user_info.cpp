@@ -45,6 +45,8 @@ brls::Label* UserInfoView::getLabelName() { return this->labelUsername; }
 
 brls::Label* UserInfoView::getLabelMisc() { return this->labeMisc; }
 
+brls::Box* UserInfoView::getHintBox() { return this->boxHint; }
+
 void UserInfoView::setHintType(InfoHintType type) {
     if (type == InfoHintType::NONE) {
         this->boxHint->setVisibility(brls::Visibility::GONE);

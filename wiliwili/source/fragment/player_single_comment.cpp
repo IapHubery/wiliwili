@@ -102,7 +102,7 @@ public:
         if (dataList[index].rpid == 0 || dataList[index].rpid == 1) {
             return;
         }
-        if (!DialogHelper::checkLogin()) return;
+        // 未登录也可以打开评论操作栏（查看图片等），点赞/回复会在操作栏里单独校验登录状态
 
         auto* item = dynamic_cast<VideoComment*>(recycler->getGridItemByIndex(index));
         if (!item) return;
@@ -427,16 +427,19 @@ PlayerCommentAction::PlayerCommentAction(CommentUiType type) {
     this->comment->setMaxRows(SIZE_T_MAX);
 
     this->svgLike->registerClickAction([this](...) {
+        if (!DialogHelper::checkLogin()) return true;
         this->dismiss();
         this->likeClickEvent.fire(this->comment->getData().action == 1 ? 0 : 1);
         return true;
     });
     this->svgDisLike->registerClickAction([this](...) {
+        if (!DialogHelper::checkLogin()) return true;
         this->dismiss();
         this->likeClickEvent.fire(this->comment->getData().action == 2 ? 0 : 2);
         return true;
     });
     this->svgReply->registerClickAction([this](...) {
+        if (!DialogHelper::checkLogin()) return true;
         // 直接退出不调用动画
         // 相关issue: https://github.com/xfangfang/wiliwili/issues/108
         brls::Application::popActivity(brls::TransitionAnimation::NONE);
