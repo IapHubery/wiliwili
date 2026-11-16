@@ -102,7 +102,7 @@ VideoComment::VideoComment() {
 
     // 点击头像 / 昵称进入用户空间（未登录也可以）
     this->userInfo->registerClickAction([this](brls::View*) {
-        Intent::openUserSpace(std::to_string(this->comment_data.member.mid));
+        Intent::openUserSpace(this->comment_data.member.mid);
         return true;
     });
     this->userInfo->addGestureRecognizer(new brls::TapGestureRecognizer(this->userInfo));
