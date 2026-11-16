@@ -10,6 +10,10 @@
 
 #include "utils/toast_helper.hpp"
 
+#ifdef ABSOLUTE
+#undef ABSOLUTE
+#endif
+
 namespace {
 
 class ToastView : public brls::Box {

@@ -30,6 +30,10 @@
 #include "utils/toast_helper.hpp"
 #include "utils/shortcut_helper.hpp"
 
+#ifdef ABSOLUTE
+#undef ABSOLUTE
+#endif
+
 using namespace brls::literals;
 
 namespace {
