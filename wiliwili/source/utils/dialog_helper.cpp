@@ -5,6 +5,7 @@
 #include <borealis/views/dialog.hpp>
 #include "utils/dialog_helper.hpp"
 #include "utils/config_helper.hpp"
+#include "utils/toast_helper.hpp"
 
 using namespace brls::literals;
 
@@ -24,7 +25,7 @@ void DialogHelper::showCancelableDialog(const std::string& msg, std::function<vo
 /// 检查本地是否存在登录信息，非联网检查
 bool DialogHelper::checkLogin() {
     if (!ProgramConfig::instance().hasLoginInfo()) {
-        DialogHelper::showDialog("wiliwili/home/common/no_login"_i18n);
+        ToastHelper::show("wiliwili/home/common/no_login"_i18n);
         return false;
     }
     return true;

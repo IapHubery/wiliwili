@@ -72,6 +72,14 @@ void LocalStore::addHistory(const LocalVideoItem& item) {
     this->save();
 }
 
+void LocalStore::removeHistory(const std::string& bvid) {
+    std::lock_guard<std::mutex> lock(this->mutex);
+    this->historyList.erase(std::remove_if(this->historyList.begin(), this->historyList.end(),
+                                           [&bvid](const LocalVideoItem& i) { return i.bvid == bvid; }),
+                            this->historyList.end());
+    this->save();
+}
+
 void LocalStore::clearHistory() {
     std::lock_guard<std::mutex> lock(this->mutex);
     this->historyList.clear();

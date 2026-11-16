@@ -60,6 +60,7 @@ public:
     // 历史记录（按最近观看时间倒序）
     std::vector<LocalVideoItem> getHistory();
     void addHistory(const LocalVideoItem& item);
+    void removeHistory(const std::string& bvid);
     void clearHistory();
 
     // 稍后再看

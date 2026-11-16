@@ -322,6 +322,28 @@
     "local_fav_removed": "Removed from local favorites",
     "local_later_added": "Added to watch later",
     "local_later_removed": "Removed from watch later",
+
+    "local_today": "Today",
+
+    "local_yesterday": "Yesterday",
+
+    "local_earlier": "Earlier",
+
+    "local_done": "Done",
+
+    "local_select_all": "Select all",
+
+    "local_delete": "Delete",
+
+    "local_delete_confirm": "Delete the selected videos?",
+
+    "local_deleted": "Deleted",
+
+    "local_no_selection": "Please select videos first",
+
+    "fav_success": "Added to favorites",
+
+    "fav_cancel": "Removed from favorites",
     "subscription": "Subscription",
     "anime": "Anime",
     "series": "Series",

@@ -322,6 +322,28 @@
     "local_fav_removed": "로컬 즐겨찾기에서 제거했습니다",
     "local_later_added": "나중에 볼 목록에 추가했습니다",
     "local_later_removed": "나중에 볼 목록에서 제거했습니다",
+
+    "local_today": "오늘",
+
+    "local_yesterday": "어제",
+
+    "local_earlier": "이전",
+
+    "local_done": "완료",
+
+    "local_select_all": "전체 선택",
+
+    "local_delete": "삭제",
+
+    "local_delete_confirm": "선택한 동영상을 삭제할까요?",
+
+    "local_deleted": "삭제했습니다",
+
+    "local_no_selection": "먼저 동영상을 선택하세요",
+
+    "fav_success": "즐겨찾기에 추가했습니다",
+
+    "fav_cancel": "즐겨찾기에서 제거했습니다",
     "subscription": "구독",
     "anime": "애니메이션",
     "series": "시리즈",

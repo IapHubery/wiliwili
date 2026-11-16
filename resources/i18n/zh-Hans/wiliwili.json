@@ -322,6 +322,28 @@
     "local_fav_removed": "已从本地收藏移除",
     "local_later_added": "已加入稍后再看",
     "local_later_removed": "已从稍后再看移除",
+
+    "local_today": "今天",
+
+    "local_yesterday": "昨天",
+
+    "local_earlier": "更早",
+
+    "local_done": "完成",
+
+    "local_select_all": "全选",
+
+    "local_delete": "删除",
+
+    "local_delete_confirm": "确定删除选中的视频吗？",
+
+    "local_deleted": "已删除",
+
+    "local_no_selection": "请先选择视频",
+
+    "fav_success": "收藏成功",
+
+    "fav_cancel": "已取消收藏",
     "subscription": "我的订阅",
     "anime": "我的追番",
     "series": "我的追剧",

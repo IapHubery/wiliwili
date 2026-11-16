@@ -14,6 +14,7 @@
 #include "utils/dialog_helper.hpp"
 #include "utils/activity_helper.hpp"
 #include "utils/local_store.hpp"
+#include "utils/toast_helper.hpp"
 #include "utils/image_helper.hpp"
 #include "fragment/player_collection.hpp"
 #include "fragment/player_fragments.hpp"
@@ -166,7 +167,7 @@ void PlayerActivity::onContentAvailable() {
     // 点赞按钮
     this->btnAgree->getParent()->registerClickAction([this](...) {
         if (!ProgramConfig::instance().hasLoginInfo()) {
-            brls::Application::notify("wiliwili/home/common/no_login"_i18n);
+            ToastHelper::show("wiliwili/home/common/no_login"_i18n);
             return true;
         }
         this->beAgree(this->videoDetailResult.aid);
@@ -202,7 +203,7 @@ void PlayerActivity::onContentAvailable() {
             item.progress = (int)MPVCore::instance().video_progress;
             item.view_at  = (int64_t)wiliwili::getUnixTime();
             bool added    = LocalStore::instance().toggleLater(item);
-            brls::Application::notify(added ? "wiliwili/mine/local_later_added"_i18n
+            ToastHelper::show(added ? "wiliwili/mine/local_later_added"_i18n
                                             : "wiliwili/mine/local_later_removed"_i18n);
             return true;
         });

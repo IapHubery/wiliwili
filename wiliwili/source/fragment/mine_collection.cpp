@@ -11,6 +11,7 @@
 #include "view/video_card.hpp"
 #include "utils/number_helper.hpp"
 #include "utils/image_helper.hpp"
+#include "utils/config_helper.hpp"
 #include "utils/shortcut_helper.hpp"
 
 using namespace brls::literals;
@@ -106,7 +107,11 @@ MineCollection::MineCollection() {
 
     recyclingGrid->registerCell("Cell", []() { return RecyclingGridItemCollectionVideoCard::create(); });
 
-    recyclingGrid->onNextPage([this]() { this->requestData(); });
+    recyclingGrid->onNextPage([this]() {
+        // 未登录时只有本地收藏夹，不需要分页
+        if (!ProgramConfig::instance().hasLoginInfo()) return;
+        this->requestData();
+    });
 
     recyclingGrid->setRefreshAction([this]() {
         AutoTabFrame::focus2Sidebar(this);

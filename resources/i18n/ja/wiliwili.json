@@ -322,6 +322,28 @@
     "local_fav_removed": "ローカルお気に入りから削除しました",
     "local_later_added": "後で見るに追加しました",
     "local_later_removed": "後で見るから削除しました",
+
+    "local_today": "今日",
+
+    "local_yesterday": "昨日",
+
+    "local_earlier": "それ以前",
+
+    "local_done": "完了",
+
+    "local_select_all": "全選択",
+
+    "local_delete": "削除",
+
+    "local_delete_confirm": "選択した動画を削除しますか？",
+
+    "local_deleted": "削除しました",
+
+    "local_no_selection": "動画を選択してください",
+
+    "fav_success": "お気に入りに追加しました",
+
+    "fav_cancel": "お気に入りから削除しました",
     "subscription": "サブスクリプション",
     "anime": "アニメ",
     "series": "シリーズ",

@@ -16,6 +16,7 @@
 #include "utils/dialog_helper.hpp"
 #include "utils/number_helper.hpp"
 #include "utils/local_store.hpp"
+#include "utils/toast_helper.hpp"
 #include "presenter/comment_related.hpp"
 #include "utils/shortcut_helper.hpp"
 #include "view/qr_image.hpp"
@@ -413,12 +414,11 @@ void BasePlayerActivity::showCollectionDialog(uint64_t id, int videoType) {
         item.duration = this->videoDetailResult.duration;
         item.view_at  = (int64_t)wiliwili::getUnixTime();
         if (item.bvid.empty()) {
-            brls::Application::notify("wiliwili/home/common/no_login"_i18n);
+            ToastHelper::showBottom("wiliwili/home/common/no_login"_i18n);
             return;
         }
         bool added = LocalStore::instance().toggleFavorite(item);
-        brls::Application::notify(added ? "wiliwili/mine/local_fav_added"_i18n
-                                        : "wiliwili/mine/local_fav_removed"_i18n);
+        ToastHelper::show(added ? "wiliwili/mine/fav_success"_i18n : "wiliwili/mine/fav_cancel"_i18n);
         return;
     }
     auto playerCollection = new PlayerCollection(id, videoType);
@@ -495,7 +495,7 @@ void BasePlayerActivity::setVideoQuality() {
 #endif
             // 免登录只能选择不超过 1080P 的画质，超过 1080P 仍需登录
             if (ProgramConfig::instance().getCSRF().empty() && code > 80) {
-                DialogHelper::showDialog("wiliwili/home/common/no_login"_i18n);
+                ToastHelper::show("wiliwili/home/common/no_login"_i18n);
                 return;
             }
 

@@ -15,6 +15,7 @@
 #include "fragment/share_dialog.hpp"
 #include "utils/config_helper.hpp"
 #include "utils/dialog_helper.hpp"
+#include "utils/toast_helper.hpp"
 #include "utils/number_helper.hpp"
 #include "utils/image_helper.hpp"
 #include "utils/shortcut_helper.hpp"
@@ -133,7 +134,7 @@ void PlayerSeasonActivity::onContentAvailable() {
     // 点赞按钮
     this->btnAgree->getParent()->registerClickAction([this](...) {
         if (!ProgramConfig::instance().hasLoginInfo()) {
-            brls::Application::notify("wiliwili/home/common/no_login"_i18n);
+            ToastHelper::show("wiliwili/home/common/no_login"_i18n);
             return true;
         }
         this->beAgree(episodeResult.aid);

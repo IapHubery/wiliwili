@@ -10,6 +10,7 @@
 #include "view/video_card.hpp"
 #include "view/text_box.hpp"
 #include "utils/image_helper.hpp"
+#include "utils/config_helper.hpp"
 #include "utils/activity_helper.hpp"
 #include "utils/local_store.hpp"
 #include "bilibili.h"
@@ -93,7 +94,11 @@ MineCollectionVideoList::MineCollectionVideoList() {
 
     // 初始化列表
     recyclingGrid->registerCell("Cell", []() { return RecyclingGridItemVideoCard::create(); });
-    recyclingGrid->onNextPage([this]() { this->requestCollectionList(); });
+    recyclingGrid->onNextPage([this]() {
+        // 未登录时本地收藏数据已全部加载，不需要分页
+        if (!ProgramConfig::instance().hasLoginInfo()) return;
+        this->requestCollectionList();
+    });
     recyclingGrid->setRefreshAction([this]() {
         brls::Application::giveFocus(this->imageCover);
         this->recyclingGrid->showSkeleton();

@@ -5,9 +5,11 @@
 #include <tinyxml2.h>
 #include <pystring.h>
 #include <borealis/core/thread.hpp>
+#include <borealis/core/i18n.hpp>
 
 #include "presenter/video_detail.hpp"
 #include "utils/config_helper.hpp"
+#include "utils/toast_helper.hpp"
 #include "utils/number_helper.hpp"
 #include "view/danmaku_core.hpp"
 #include "view/subtitle_core.hpp"
@@ -15,6 +17,8 @@
 #include "view/mpv_core.hpp"
 #include "bilibili/result/mine_collection_result.h"
 #include "view/video_snapshot_core.hpp"
+
+using namespace brls::literals;
 
 /// 请求视频数据
 void VideoDetail::requestData(const bilibili::VideoDetailResult& video) { this->requestVideoInfo(video.bvid); }
@@ -681,12 +685,14 @@ void VideoDetail::addResource(uint64_t aid, int type, bool isFavorite, std::stri
         [ASYNC_TOKEN, isFavorite]() {
             ASYNC_RELEASE
             videoRelation.favorite = isFavorite;
+            std::string msg = isFavorite ? "wiliwili/mine/fav_success"_i18n : "wiliwili/mine/fav_cancel"_i18n;
+            brls::sync([msg]() { ToastHelper::show(msg); });
         },
         [ASYNC_TOKEN](BILI_ERR) {
             // 请求失败 恢复默认状态
             brls::Logger::error("{}", error);
             brls::sync([ASYNC_TOKEN, error]() {
-                brls::Application::notify(error);
+                ToastHelper::showBottom(error);
                 ASYNC_RELEASE
                 this->onVideoRelationInfo(videoRelation);
             });
