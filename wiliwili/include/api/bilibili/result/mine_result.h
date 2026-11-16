@@ -77,6 +77,21 @@ inline void from_json(const nlohmann::json& nlohmann_json_j, QrLoginInfoResultV2
     NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM, refresh_token));
 }
 
+namespace space_json {
+
+inline std::string getString(const nlohmann::json& j, const char* key) {
+    auto it = j.find(key);
+    return (it != j.end() && it->is_string()) ? it->get<std::string>() : std::string{};
+}
+
+template <typename T>
+inline void getNumber(const nlohmann::json& j, const char* key, T& out) {
+    auto it = j.find(key);
+    if (it != j.end() && it->is_number()) out = static_cast<T>(it->get<double>());
+}
+
+}  // namespace space_json
+
 /// 用户空间用户信息（/x/space/wbi/acc/info）
 class UserSpaceInfo {
 public:
@@ -87,11 +102,11 @@ public:
     int level = 0;
 };
 inline void from_json(const nlohmann::json& j, UserSpaceInfo& u) {
-    u.mid   = j.value("mid", 0ULL);
-    u.name  = j.value("name", std::string{});
-    u.face  = j.value("face", std::string{});
-    u.sign  = j.value("sign", std::string{});
-    u.level = j.value("level", 0);
+    space_json::getNumber(j, "mid", u.mid);
+    space_json::getNumber(j, "level", u.level);
+    u.name = space_json::getString(j, "name");
+    u.face = space_json::getString(j, "face");
+    u.sign = space_json::getString(j, "sign");
 }
 
 /// 用户名片（/x/web-interface/card），空间接口风控时的降级方案
@@ -104,10 +119,10 @@ public:
 };
 inline void from_json(const nlohmann::json& j, UserCardInfo& u) {
     const auto& card = (j.contains("card") && j.at("card").is_object()) ? j.at("card") : j;
-    u.mid            = card.value("mid", 0ULL);
-    u.name           = card.value("name", std::string{});
-    u.face           = card.value("face", std::string{});
-    u.sign           = card.value("sign", std::string{});
+    space_json::getNumber(card, "mid", u.mid);
+    u.name = space_json::getString(card, "name");
+    u.face = space_json::getString(card, "face");
+    u.sign = space_json::getString(card, "sign");
 }
 
 /// 空间投稿（app 接口 /x/v2/space/archive/cursor）
@@ -127,17 +142,17 @@ public:
     int ctime    = 0;
 };
 inline void from_json(const nlohmann::json& j, SpaceArchiveItem& v) {
-    v.title   = j.value("title", std::string{});
-    v.cover   = j.value("cover", std::string{});
-    v.bvid    = j.value("bvid", std::string{});
-    v.author  = j.value("author", std::string{});
-    v.length  = j.value("length", std::string{});
-    v.param   = j.value("param", std::string{});
-    v.duration = j.value("duration", 0);
-    v.play     = j.value("play", 0);
-    v.danmaku  = j.value("danmaku", 0);
-    v.ctime    = j.value("ctime", 0);
-    v.cid      = j.value("first_cid", 0ULL);
+    v.title  = space_json::getString(j, "title");
+    v.cover  = space_json::getString(j, "cover");
+    v.bvid   = space_json::getString(j, "bvid");
+    v.author = space_json::getString(j, "author");
+    v.length = space_json::getString(j, "length");
+    v.param  = space_json::getString(j, "param");
+    space_json::getNumber(j, "duration", v.duration);
+    space_json::getNumber(j, "play", v.play);
+    space_json::getNumber(j, "danmaku", v.danmaku);
+    space_json::getNumber(j, "ctime", v.ctime);
+    space_json::getNumber(j, "first_cid", v.cid);
     if (v.aid == 0 && !v.param.empty()) {
         try {
             v.aid = std::stoull(v.param);
@@ -155,9 +170,9 @@ public:
 };
 inline void from_json(const nlohmann::json& j, SpaceArchiveWrapper& w) {
     if (j.contains("item") && j.at("item").is_array()) j.at("item").get_to(w.item);
-    w.has_next = j.value("has_next", false);
-    w.count    = j.value("count", 0);
-    w.next     = j.value("next", 0);
+    if (j.contains("has_next") && j.at("has_next").is_boolean()) w.has_next = j.at("has_next").get<bool>();
+    space_json::getNumber(j, "count", w.count);
+    space_json::getNumber(j, "next", w.next);
 }
 
 class UserUploadedVideoResult {
