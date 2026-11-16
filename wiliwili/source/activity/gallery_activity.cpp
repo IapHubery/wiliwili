@@ -3,7 +3,9 @@
 //
 
 #include <chrono>
+#include <exception>
 #include <fstream>
+#include <functional>
 #include <thread>
 
 #include <fmt/format.h>

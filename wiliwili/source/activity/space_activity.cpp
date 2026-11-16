@@ -13,6 +13,7 @@
 #include "bilibili.h"
 #include "utils/activity_helper.hpp"
 #include "utils/image_helper.hpp"
+#include "utils/number_helper.hpp"
 #include "view/video_card.hpp"
 
 using namespace brls::literals;
@@ -65,7 +66,7 @@ bilibili::UserUploadedVideoResult spaceItemToUploaded(const bilibili::SpaceArchi
     v.created      = (unsigned int)item.ctime;
     v.play         = item.play;
     v.video_review = (unsigned int)item.danmaku;
-    v.length       = item.length;
+    v.length       = item.length.empty() ? wiliwili::sec2Time(item.duration) : item.length;
     return v;
 }
 
