@@ -655,6 +655,14 @@ void SettingActivity::onContentAvailable() {
                               ImageHelper::setRequestThreads(threadOption.rawOptionList[data]);
                           });
 
+    /// Image save path
+    btnImageSavePath->init("wiliwili/setting/app/image/save_path"_i18n,
+                           conf.getSettingItem(SettingItem::IMAGE_SAVE_PATH, std::string{""}),
+                           [](const std::string& data) {
+                               ProgramConfig::instance().setSettingItem(SettingItem::IMAGE_SAVE_PATH,
+                                                                                pystring::strip(data));
+                           });
+
     selectorInmemory->init("wiliwili/setting/app/playback/in_memory_cache"_i18n,
 #ifdef __PSV__
                            {"0MB (" + "hints/off"_i18n + ")", "1MB", "5MB", "10MB"},

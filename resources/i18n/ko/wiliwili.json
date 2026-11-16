@@ -1,4 +1,8 @@
 {
+  "image": {
+    "saved": "이미지가 저장되었습니다",
+    "save_fail": "이미지 저장 실패"
+  },
   "title": "wiliwili",
   "github": "https://github.com/xfangfang/wiliwili",
   "github_release": "https://github.com/xfangfang/wiliwili/releases/latest",
@@ -37,7 +41,9 @@
       "image": {
         "header": "이미지",
         "texture": "그림 텍스처 캐시 수",
-        "threads": "이미지 로드 스레드 수"
+        "threads": "이미지 로드 스레드 수",
+
+        "save_path": "이미지 저장 경로"
       },
       "network": {
         "header": "네트워크",

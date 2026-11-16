@@ -73,6 +73,8 @@ class HistoryVideoListCursor;
 class HistoryVideoResultWrapper;
 class UserUploadedVideoResultWrapper;
 class UserSpaceInfo;
+class SpaceArchiveWrapper;
+class UserCardInfo;
 class SeasonResultWrapper;
 class SeasonRecommendWrapper;
 class SeasonStatusResult;
@@ -238,6 +240,15 @@ public:
     static void get_space_user_info(const std::string& mid,
                                     const std::function<void(UserSpaceInfo)>& callback = nullptr,
                                     const ErrorCallback& error                        = nullptr);
+
+    /// 用户空间投稿（app 接口，避免 web 接口的风控）
+    static void get_space_videos(uint64_t mid, int pn, int ps,
+                                 const std::function<void(SpaceArchiveWrapper)>& callback = nullptr,
+                                 const ErrorCallback& error                               = nullptr);
+
+    /// 用户名片（空间接口风控时的降级方案）
+    static void get_user_card(const std::string& mid, const std::function<void(UserCardInfo)>& callback = nullptr,
+                              const ErrorCallback& error = nullptr);
 
     /// get user's upload videos
     static void get_user_videos(uint64_t mid, int pn, int ps,

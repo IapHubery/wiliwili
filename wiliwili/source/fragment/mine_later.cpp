@@ -24,6 +24,12 @@ public:
         bilibili::WatchLaterItem& r      = this->list[index];
         item->setCard(r.pic + ImageHelper::h_ext, r.title, r.owner.name, 0, r.stat.view, r.stat.danmaku,
                       r.duration); //todo
+        // 直接把本条数据绑定到卡片上，避免列表项索引错位导致点击跳转到错误的视频
+        auto bvid = r.bvid;
+        item->registerClickAction([bvid](brls::View*) {
+            if (!bvid.empty()) Intent::openBV(bvid);
+            return true;
+        });
         return item;
     }
 

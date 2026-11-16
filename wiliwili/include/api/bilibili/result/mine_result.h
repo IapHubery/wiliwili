@@ -94,6 +94,72 @@ inline void from_json(const nlohmann::json& j, UserSpaceInfo& u) {
     u.level = j.value("level", 0);
 }
 
+/// 用户名片（/x/web-interface/card），空间接口风控时的降级方案
+class UserCardInfo {
+public:
+    uint64_t mid = 0;
+    std::string name;
+    std::string face;
+    std::string sign;
+};
+inline void from_json(const nlohmann::json& j, UserCardInfo& u) {
+    const auto& card = (j.contains("card") && j.at("card").is_object()) ? j.at("card") : j;
+    u.mid            = card.value("mid", 0ULL);
+    u.name           = card.value("name", std::string{});
+    u.face           = card.value("face", std::string{});
+    u.sign           = card.value("sign", std::string{});
+}
+
+/// 空间投稿（app 接口 /x/v2/space/archive/cursor）
+class SpaceArchiveItem {
+public:
+    std::string title;
+    std::string cover;
+    std::string bvid;
+    std::string author;
+    std::string length;
+    std::string param;
+    uint64_t aid = 0;
+    uint64_t cid = 0;
+    int duration = 0;
+    int play     = 0;
+    int danmaku  = 0;
+    int ctime    = 0;
+};
+inline void from_json(const nlohmann::json& j, SpaceArchiveItem& v) {
+    v.title   = j.value("title", std::string{});
+    v.cover   = j.value("cover", std::string{});
+    v.bvid    = j.value("bvid", std::string{});
+    v.author  = j.value("author", std::string{});
+    v.length  = j.value("length", std::string{});
+    v.param   = j.value("param", std::string{});
+    v.duration = j.value("duration", 0);
+    v.play     = j.value("play", 0);
+    v.danmaku  = j.value("danmaku", 0);
+    v.ctime    = j.value("ctime", 0);
+    v.cid      = j.value("first_cid", 0ULL);
+    if (v.aid == 0 && !v.param.empty()) {
+        try {
+            v.aid = std::stoull(v.param);
+        } catch (...) {
+        }
+    }
+}
+
+class SpaceArchiveWrapper {
+public:
+    std::vector<SpaceArchiveItem> item;
+    bool has_next = false;
+    int count     = 0;
+    int next      = 0;
+};
+inline void from_json(const nlohmann::json& j, SpaceArchiveWrapper& w) {
+    if (j.contains("item") && j.at("item").is_array()) j.at("item").get_to(w.item);
+    w.has_next = j.value("has_next", false);
+    w.count    = j.value("count", 0);
+    w.next     = j.value("next", 0);
+}
+
 class UserUploadedVideoResult {
 public:
     int comment;

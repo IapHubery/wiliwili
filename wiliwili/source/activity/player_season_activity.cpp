@@ -2,6 +2,7 @@
 // Created by fang on 2023/1/3.
 //
 
+#include <borealis/core/application.hpp>
 #include <borealis/views/dialog.hpp>
 #include <borealis/views/dropdown.hpp>
 #include <borealis/core/touch/tap_gesture.hpp>
@@ -131,7 +132,10 @@ void PlayerSeasonActivity::onContentAvailable() {
 
     // 点赞按钮
     this->btnAgree->getParent()->registerClickAction([this](...) {
-        if (!DialogHelper::checkLogin()) return true;
+        if (!ProgramConfig::instance().hasLoginInfo()) {
+            brls::Application::notify("wiliwili/home/common/no_login"_i18n);
+            return true;
+        }
         this->beAgree(episodeResult.aid);
         return true;
     });

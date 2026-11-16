@@ -119,6 +119,7 @@ using namespace brls::literals;
 std::unordered_map<SettingItem, ProgramOption> ProgramConfig::SETTING_MAP = {
     /// string
     {SettingItem::CUSTOM_UPDATE_API, {"custom_update_api", {}, {}, 0}},
+{SettingItem::IMAGE_SAVE_PATH, {"image_save_path", {}, {}, 0}},
     {SettingItem::APP_LANG,
      {"app_lang",
       {

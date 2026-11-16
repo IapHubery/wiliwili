@@ -50,6 +50,7 @@ private:
     BRLS_BIND(BiliSelectorCell, selectorUIScale, "setting/ui/scale");
     BRLS_BIND(BiliSelectorCell, selectorTexture, "setting/image/texture");
     BRLS_BIND(BiliSelectorCell, selectorThreads, "setting/image/threads");
+    BRLS_BIND(brls::InputCell, btnImageSavePath, "setting/image/save_path");
     BRLS_BIND(BiliSelectorCell, selectorKeymap, "setting/keymap");
     BRLS_BIND(brls::BooleanCell, btnKeymapSwap, "setting/keymap_swap");
     BRLS_BIND(brls::BooleanCell, btnOpencc, "setting/opencc");

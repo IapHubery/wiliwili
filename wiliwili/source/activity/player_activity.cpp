@@ -165,7 +165,10 @@ void PlayerActivity::onContentAvailable() {
 
     // 点赞按钮
     this->btnAgree->getParent()->registerClickAction([this](...) {
-        if (!DialogHelper::checkLogin()) return true;
+        if (!ProgramConfig::instance().hasLoginInfo()) {
+            brls::Application::notify("wiliwili/home/common/no_login"_i18n);
+            return true;
+        }
         this->beAgree(this->videoDetailResult.aid);
         return true;
     });
@@ -199,8 +202,8 @@ void PlayerActivity::onContentAvailable() {
             item.progress = (int)MPVCore::instance().video_progress;
             item.view_at  = (int64_t)wiliwili::getUnixTime();
             bool added    = LocalStore::instance().toggleLater(item);
-            DialogHelper::showDialog(added ? "wiliwili/mine/local_later_added"_i18n
-                                           : "wiliwili/mine/local_later_removed"_i18n);
+            brls::Application::notify(added ? "wiliwili/mine/local_later_added"_i18n
+                                            : "wiliwili/mine/local_later_removed"_i18n);
             return true;
         });
     }

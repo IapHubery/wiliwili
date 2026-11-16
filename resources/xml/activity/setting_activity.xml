@@ -262,6 +262,9 @@
                             <SelectorCell
                                     id="setting/image/threads"/>
 
+                            <brls:InputCell
+                                    id="setting/image/save_path"/>
+
                         </brls:Box>
                         <brls:Header
                                 width="auto"

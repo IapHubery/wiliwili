@@ -1,4 +1,8 @@
 {
+  "image": {
+    "saved": "圖片已儲存",
+    "save_fail": "圖片儲存失敗"
+  },
   "title": "喴哩喴哩",
   "github": "https://github.com/xfangfang/wiliwili",
   "github_release": "https://github.com/xfangfang/wiliwili/releases/latest",
@@ -37,7 +41,9 @@
       "image": {
         "header": "圖片設定",
         "texture": "圖片紋理快取數量",
-        "threads": "圖片加載線程數"
+        "threads": "圖片加載線程數",
+
+        "save_path": "圖片儲存路徑"
       },
       "network": {
         "header": "網絡設定",

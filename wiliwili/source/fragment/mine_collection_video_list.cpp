@@ -31,6 +31,21 @@ public:
 
         item->setCard(r.cover + ImageHelper::h_ext, r.title, author, r.pubtime, r.cnt_info.play, r.cnt_info.danmaku,
                       r.duration);
+        // 直接把本条数据绑定到卡片上，避免列表项索引错位导致点击跳转到错误的视频
+        auto type  = r.type;
+        auto bvid  = r.bvid;
+        auto id    = r.id;
+        size_t idx = index;
+        item->registerClickAction([this, recycler, idx, type, bvid, id](brls::View*) {
+            if (type == 2 && !bvid.empty()) {
+                Intent::openBV(bvid);
+            } else if (type == 24) {
+                Intent::openSeasonByEpId(id);
+            } else {
+                this->onItemSelected(recycler, idx);
+            }
+            return true;
+        });
         return item;
     }
 

@@ -351,6 +351,33 @@ void BilibiliClient::get_space_user_info(const std::string& mid,
                                                callback, error);
 }
 
+void BilibiliClient::get_space_videos(uint64_t mid, int pn, int ps,
+                                      const std::function<void(SpaceArchiveWrapper)>& callback,
+                                      const ErrorCallback& error) {
+    // 参考 PiliPlus：web 的 /x/space/wbi/arc/search 在未登录时容易 412 / 风控失败，
+    // 改用 app 接口（appkey + sign）请求空间投稿
+    HTTP::getResultAsync<SpaceArchiveWrapper>(Api::SpaceArchiveCursor,
+                                              {
+                                                  {"vmid", std::to_string(mid)},
+                                                  {"ps", std::to_string(ps)},
+                                                  {"pn", std::to_string(pn)},
+                                                  {"order", "pubdate"},
+                                                  {"mobi_app", "android"},
+                                                  {"platform", "android"},
+                                                  {"c_locale", "zh_CN"},
+                                                  {"s_locale", "zh_CN"},
+                                                  {"channel", "master"},
+                                                  {"build", BILIBILI_BUILD},
+                                              },
+                                              callback, error, true);
+}
+
+void BilibiliClient::get_user_card(const std::string& mid,
+                                   const std::function<void(UserCardInfo)>& callback,
+                                   const ErrorCallback& error) {
+    HTTP::getResultAsync<UserCardInfo>(Api::MemberCard, {{"mid", mid}}, callback, error);
+}
+
 void BilibiliClient::get_user_videos(uint64_t mid, int pn, int ps,
                                      const std::function<void(UserUploadedVideoResultWrapper)>& callback,
                                      const ErrorCallback& error) {

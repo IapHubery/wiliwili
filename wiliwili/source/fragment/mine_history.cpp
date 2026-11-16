@@ -52,6 +52,18 @@ public:
         item->setCard(r.cover + ImageHelper::h_ext, r.title, author, time, duration, badge, r.history.dt, progress,
                       showUpName);
 
+        // 直接把本条数据绑定到卡片上，避免列表项索引错位导致点击跳转到错误的视频
+        auto history = r.history;
+        size_t idx   = index;
+        item->registerClickAction([this, recycler, idx, history](brls::View*) {
+            if (history.business == "archive" && !history.bvid.empty()) {
+                Intent::openBV(history.bvid, history.cid, -1);
+            } else {
+                this->onItemSelected(recycler, idx);
+            }
+            return true;
+        });
+
         return item;
     }
 

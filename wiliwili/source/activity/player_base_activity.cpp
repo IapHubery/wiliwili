@@ -401,8 +401,8 @@ void BasePlayerActivity::setCommonData() {
 }
 
 void BasePlayerActivity::showCollectionDialog(uint64_t id, int videoType) {
-    if (!DialogHelper::checkLogin()) {
-        // 未登录：收藏到本地收藏夹
+    if (!ProgramConfig::instance().hasLoginInfo()) {
+        // 未登录：直接收藏到本地收藏夹，不请求官方接口
         LocalVideoItem item;
         item.aid      = id;
         item.bvid     = this->videoDetailResult.bvid;
@@ -413,12 +413,12 @@ void BasePlayerActivity::showCollectionDialog(uint64_t id, int videoType) {
         item.duration = this->videoDetailResult.duration;
         item.view_at  = (int64_t)wiliwili::getUnixTime();
         if (item.bvid.empty()) {
-            DialogHelper::showDialog("wiliwili/home/common/no_login"_i18n);
+            brls::Application::notify("wiliwili/home/common/no_login"_i18n);
             return;
         }
         bool added = LocalStore::instance().toggleFavorite(item);
-        DialogHelper::showDialog(added ? "wiliwili/mine/local_fav_added"_i18n
-                                       : "wiliwili/mine/local_fav_removed"_i18n);
+        brls::Application::notify(added ? "wiliwili/mine/local_fav_added"_i18n
+                                        : "wiliwili/mine/local_fav_removed"_i18n);
         return;
     }
     auto playerCollection = new PlayerCollection(id, videoType);

@@ -1,4 +1,8 @@
 {
+  "image": {
+    "saved": "Immagine salvata",
+    "save_fail": "Salvataggio immagine non riuscito"
+  },
   "title": "wiliwili",
   "github": "https://github.com/xfangfang/wiliwili",
   "github_release": "https://github.com/xfangfang/wiliwili/releases/latest",
@@ -37,7 +41,9 @@
       "image": {
         "header": "Immagine",
         "texture": "Numero di cache texture immagine",
-        "threads": "Numero di thread caricamento immagini"
+        "threads": "Numero di thread caricamento immagini",
+
+        "save_path": "Percorso di salvataggio immagini"
       },
       "network": {
         "header": "Rete",
