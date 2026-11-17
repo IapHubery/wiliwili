@@ -368,6 +368,7 @@
   },
   "player": {
     "intro": "Introduction",
+    "no_intro": "This video has no description",
     "p": "Parts",
     "ugc_season": "Playlist",
     "related": "Related",

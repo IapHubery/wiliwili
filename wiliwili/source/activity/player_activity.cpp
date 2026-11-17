@@ -148,8 +148,28 @@ PlayerActivity::PlayerActivity(const std::string& bvid, uint64_t cid, int progre
 void PlayerActivity::onContentAvailable() {
     this->setCommonData();
 
-    // 标题仅用于展示，不参与键盘选择，也不响应点击
-    this->videoTitleBox->setFocusable(false);
+    // 标题：有简介时弹出简介，没有简介时 Toast 提示
+    this->videoTitleBox->setFocusable(true);
+    auto openIntro = [this]() {
+        if (this->videoDetailResult.desc.empty()) {
+            ToastHelper::show("wiliwili/player/no_intro"_i18n);
+            return;
+        }
+        auto* evaluate = new PlayerEvaluate();
+        evaluate->setContent(this->videoDetailResult.desc);
+        auto dialog = new brls::Dialog(evaluate);
+        dialog->open();
+    };
+    this->videoTitleBox->registerClickAction([openIntro](brls::View*) {
+        openIntro();
+        return true;
+    });
+    this->videoTitleBox->registerAction("wiliwili/player/intro"_i18n, brls::ControllerButton::BUTTON_A,
+                                        [openIntro](brls::View*) -> bool {
+                                            openIntro();
+                                            return true;
+                                        });
+    this->videoTitleBox->addGestureRecognizer(new brls::TapGestureRecognizer(this->videoTitleBox));
 
     // 自动加载下一页评论
     this->recyclingGrid->onNextPage([this]() { this->requestVideoComment(std::to_string(this->videoDetailResult.aid)); });

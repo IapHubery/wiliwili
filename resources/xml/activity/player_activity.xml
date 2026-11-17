@@ -39,7 +39,7 @@
                         wireframe="false"
                         marginTop="10"
                         alignItems="center"
-                        focusable="false"
+                        focusable="true"
                         height="40"
                         width="100%">
                     <brls:Label

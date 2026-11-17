@@ -368,6 +368,7 @@
   },
   "player": {
     "intro": "查看简介",
+    "no_intro": "该视频没有简介哦",
     "p": "分集",
     "ugc_season": "合集",
     "related": "推荐",

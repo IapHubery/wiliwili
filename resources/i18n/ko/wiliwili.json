@@ -368,6 +368,7 @@
   },
   "player": {
     "intro": "소개",
+    "no_intro": "이 동영상에는 소개가 없습니다",
     "p": "부분",
     "ugc_season": "재생목록",
     "related": "관련",

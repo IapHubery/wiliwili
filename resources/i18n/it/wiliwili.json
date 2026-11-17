@@ -368,6 +368,7 @@
   },
   "player": {
     "intro": "Introduzione",
+    "no_intro": "Questo video non ha una descrizione",
     "p": "Parti",
     "ugc_season": "Playlist",
     "related": "Correlati",

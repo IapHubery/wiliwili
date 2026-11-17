@@ -368,6 +368,7 @@
   },
   "player": {
     "intro": "查看簡介",
+    "no_intro": "該影片沒有簡介喔",
     "p": "分集",
     "ugc_season": "合集",
     "related": "推薦",
