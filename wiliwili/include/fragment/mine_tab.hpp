@@ -59,10 +59,10 @@ private:
     BRLS_BIND(brls::Label, labelFollower, "mine/label/follower");
     BRLS_BIND(brls::Label, labelDynamic, "mine/label/dynamic");
 
-'    loginStatusEvent loginCb;
+    loginStatusEvent loginCb;
 
     brls::Box* editBox     = nullptr;
     brls::Label* editLabel = nullptr;
 
-    void toggleHistoryEdit();'
+    void toggleHistoryEdit();
 };
