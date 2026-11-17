@@ -83,6 +83,12 @@ public:
     /// 是否允许按下方向键进入评论内的图片/操作图标（评论详情页启用）
     void setFocusIntoActions(bool value) { this->focusIntoActions = value; }
 
+    /// 非详情模式（或子评论）按下方向键时的动态目标：通常是下一条评论
+    void setNextDownResolver(std::function<brls::View*()> resolver);
+
+    /// 详情页主评论的点赞/点踩/回复按下方向键时的动态目标：第一条子评论
+    void setActionDownResolver(std::function<brls::View*()> resolver);
+
     void prepareForReuse() override;
 
     void cacheForReuse() override;
@@ -105,6 +111,7 @@ protected:
     std::function<void()> dislikeCallback  = nullptr;
     std::function<void()> replyCallback    = nullptr;
     bool focusIntoActions                  = false;
+    std::function<brls::View*()> downResolver = nullptr;
 
     brls::Animatable likeFlash;
     brls::Animatable dislikeFlash;

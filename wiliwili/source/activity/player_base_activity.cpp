@@ -61,6 +61,13 @@ public:
             if (!DialogHelper::checkLogin()) return;
             this->onItemSelected(recycler, index);
         });
+        item->setNextDownResolver([this, recycler, index]() -> brls::View* {
+            for (size_t i = index + 1; i < this->getItemCount(); i++) {
+                auto* next = recycler->getGridItemByIndex(i);
+                if (dynamic_cast<VideoComment*>(next)) return next;
+            }
+            return nullptr;
+        });
         return item;
     }
 

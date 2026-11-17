@@ -347,13 +347,29 @@ void VideoComment::flashAction(brls::Box* box, brls::Animatable& anim) {
     anim.start();
 }
 
+void VideoComment::setNextDownResolver(std::function<brls::View*()> resolver) {
+    this->downResolver = std::move(resolver);
+}
+
+void VideoComment::setActionDownResolver(std::function<brls::View*()> resolver) {
+    brls::Box* boxes[] = {this->likeBox.getView(), this->dislikeBox.getView(), this->replyBox.getView()};
+    for (auto* box : boxes) {
+        if (auto* nav = dynamic_cast<NavBox*>(box)) {
+            nav->setNextFocusResolver(brls::FocusDirection::DOWN, resolver);
+        }
+    }
+}
+
 brls::View* VideoComment::getNextFocus(brls::FocusDirection direction, brls::View* currentView) {
     if (direction == brls::FocusDirection::DOWN && this->focusIntoActions) {
         if (this->picturesBox && this->picturesBox->getVisibility() == brls::Visibility::VISIBLE &&
             !this->picturesBox->getChildren().empty()) {
             return this->picturesBox->getChildren().front();
         }
-        if (this->likeBox) return this->likeBox;
+        if (this->likeBox) return this->likeBox.getView();
+    }
+    if (direction == brls::FocusDirection::DOWN && this->downResolver) {
+        if (auto* next = this->downResolver()) return next;
     }
     return RecyclingGridItem::getNextFocus(direction, currentView);
 }

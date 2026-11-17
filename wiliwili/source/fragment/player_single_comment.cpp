@@ -85,7 +85,7 @@ public:
         VideoComment* item = (VideoComment*)recycler->dequeueReusableCell("Cell");
 
         item->setData(this->dataList[index]);
-        item->setFocusIntoActions(true);
+        item->setFocusIntoActions(index == 0);
         if (index == 0) {
             item->setLineColor(nvgRGBA(180, 180, 180, 60));
             item->setLineBottom(1);
@@ -99,6 +99,15 @@ public:
         item->setLikeClickCallback([this, item, index]() { this->onCommentLike(item, index, 1); });
         item->setDislikeClickCallback([this, item, index]() { this->onCommentLike(item, index, 2); });
         item->setReplyClickCallback([this, recycler, index]() { this->onCommentReply(recycler, index); });
+        auto nextComment = [this, recycler, index]() -> brls::View* {
+            for (size_t i = index + 1; i < this->getItemCount(); i++) {
+                auto* next = recycler->getGridItemByIndex(i);
+                if (dynamic_cast<VideoComment*>(next)) return next;
+            }
+            return nullptr;
+        };
+        item->setNextDownResolver(nextComment);
+        if (index == 0) item->setActionDownResolver(nextComment);
         return item;
     }
 
