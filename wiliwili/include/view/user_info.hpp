@@ -47,9 +47,9 @@ public:
 
     void setHintType(InfoHintType type);
 
-'    brls::View* getNextFocus(brls::FocusDirection direction, brls::View* currentView) override;
+    brls::View* getNextFocus(brls::FocusDirection direction, brls::View* currentView) override;
 
-    NVGcolor hintBackground = {};'
+    NVGcolor hintBackground = {};
 
 private:
     BRLS_BIND(brls::Image, avatarView, "userinfo/avatar");
