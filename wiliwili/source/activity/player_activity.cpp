@@ -548,6 +548,22 @@ void PlayerActivity::setProgress(int p) { videoDetailPage.progress = p; }
 int PlayerActivity::getProgress() { return videoDetailPage.progress; }
 
 void PlayerActivity::reportCurrentProgress(size_t progress, size_t duration) {
+    if (!ProgramConfig::instance().hasLoginInfo()) {
+        // 未登录：把播放进度写入本地历史记录
+        if (this->videoDetailResult.bvid.empty()) return;
+        LocalVideoItem item;
+        item.bvid     = this->videoDetailResult.bvid;
+        item.aid      = this->videoDetailResult.aid;
+        item.cid      = this->videoDetailPage.cid;
+        item.title    = this->videoDetailResult.title;
+        item.cover    = this->videoDetailResult.pic;
+        item.author   = this->videoDetailResult.owner.name;
+        item.duration = duration > 0 ? (int)duration : this->videoDetailResult.duration;
+        item.progress = (int)progress;
+        item.view_at  = (int64_t)wiliwili::getUnixTime();
+        LocalStore::instance().addHistory(item);
+        return;
+    }
     this->reportHistory(videoDetailResult.aid, videoDetailPage.cid, progress, duration, 3);
 }
 

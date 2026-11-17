@@ -602,7 +602,7 @@ void BasePlayerActivity::onVideoPlayUrl(const bilibili::VideoUrlResult& result) 
         item.cover    = this->videoDetailResult.pic;
         item.author   = this->videoDetailResult.owner.name;
         item.duration = this->videoDetailResult.duration;
-        item.progress = this->getProgress();
+        item.progress = std::max(0, this->getProgress());
         item.view_at  = (int64_t)wiliwili::getUnixTime();
         LocalStore::instance().addHistory(item);
     }

@@ -14,7 +14,7 @@
             paddingRight="20">
 
         <brls:Box axis="row" alignItems="center">
-            <brls:Box
+            <NavBox
                     id="mine/history/today"
                     height="36"
                     cornerRadius="18"
@@ -27,7 +27,7 @@
                         text="@i18n/wiliwili/mine/local_today"
                         fontSize="17"
                         textColor="@theme/font/grey"/>
-            </brls:Box>
+            </NavBox>
             <brls:Box
                     id="mine/history/yesterday"
                     height="36"
@@ -57,6 +57,22 @@
                         text="@i18n/wiliwili/mine/local_earlier"
                         fontSize="17"
                         textColor="@theme/font/grey"/>
+            </brls:Box>
+
+            <brls:Box
+                    id="mine/history/done"
+                    height="36"
+                    marginLeft="12"
+                    cornerRadius="18"
+                    backgroundColor="@theme/color/bilibili"
+                    paddingLeft="16"
+                    paddingRight="16"
+                    alignItems="center"
+                    focusable="true">
+                <brls:Label
+                        text="@i18n/wiliwili/mine/local_done"
+                        fontSize="17"
+                        textColor="#FFFFFF"/>
             </brls:Box>
         </brls:Box>
 
@@ -98,7 +114,7 @@
                     textColor="@theme/font/grey"/>
         </brls:Box>
 
-        <brls:Box
+        <NavBox
                 id="mine/history/delete"
                 height="40"
                 cornerRadius="20"
@@ -111,6 +127,6 @@
                     text="@i18n/wiliwili/mine/local_delete"
                     fontSize="18"
                     textColor="#FFFFFF"/>
-        </brls:Box>
+        </NavBox>
     </brls:Box>
 </brls:Box>

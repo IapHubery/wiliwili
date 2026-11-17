@@ -114,6 +114,17 @@ MineTab::MineTab() {
             sidebar->addView(this->editBox);
         }
 
+        this->mineHistory->onEditStateChanged = [this](bool editing) {
+            if (this->editLabel) {
+                this->editLabel->setText(editing ? "wiliwili/mine/local_done"_i18n
+                                                 : "wiliwili/mine/local_edit"_i18n);
+            }
+            if (this->boxGotoUserSpace) {
+                this->boxGotoUserSpace->setVisibility(editing ? brls::Visibility::GONE
+                                                              : brls::Visibility::VISIBLE);
+            }
+        };
+
         this->mineHistory->onHistoryDataChanged = [this](bool hasData) {
             if (!this->editBox) return;
             if (!hasData && this->mineHistory->isEditing()) this->toggleHistoryEdit();
@@ -191,14 +202,7 @@ void MineTab::onUserNotLogin() {
 
 void MineTab::toggleHistoryEdit() {
     if (!this->mineHistory) return;
-    bool editing = this->mineHistory->isEditing();
-    this->mineHistory->setEditMode(!editing);
-    if (this->editLabel) {
-        this->editLabel->setText(editing ? "wiliwili/mine/local_edit"_i18n : "wiliwili/mine/local_done"_i18n);
-    }
-    if (this->boxGotoUserSpace) {
-        this->boxGotoUserSpace->setVisibility(editing ? brls::Visibility::VISIBLE : brls::Visibility::GONE);
-    }
+    this->mineHistory->setEditMode(!this->mineHistory->isEditing());
 }
 
 void MineTab::onUserInfo(const bilibili::UserResult& data) {

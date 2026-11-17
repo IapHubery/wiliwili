@@ -21,6 +21,7 @@
 
 #include "fragment/mine_history.hpp"
 #include "view/video_card.hpp"
+#include "view/nav_box.hpp"
 #include "utils/number_helper.hpp"
 #include "utils/activity_helper.hpp"
 #include "utils/image_helper.hpp"
@@ -130,6 +131,20 @@ public:
         this->checkBox->setVisibility(checked ? brls::Visibility::VISIBLE : brls::Visibility::GONE);
     }
 
+    std::function<brls::View*()> leftTarget  = nullptr;
+    std::function<brls::View*()> rightTarget = nullptr;
+
+    brls::View* getNextFocus(brls::FocusDirection direction, brls::View* currentView) override {
+        size_t column = this->getIndex() % 4;
+        if (direction == brls::FocusDirection::LEFT && column == 0 && this->leftTarget) {
+            if (auto* view = this->leftTarget()) return view;
+        }
+        if (direction == brls::FocusDirection::RIGHT && column == 3 && this->rightTarget) {
+            if (auto* view = this->rightTarget()) return view;
+        }
+        return RecyclingGridItem::getNextFocus(direction, currentView);
+    }
+
 private:
     brls::Box* checkBox = nullptr;
 };
@@ -138,7 +153,9 @@ private:
 
 class DataSourceMineHistoryVideoList : public RecyclingGridDataSource {
 public:
-    explicit DataSourceMineHistoryVideoList(bilibili::HistoryVideoListResult result) : list(std::move(result)) {
+    DataSourceMineHistoryVideoList(bilibili::HistoryVideoListResult result, brls::View* leftButton,
+                                   brls::View* rightButton)
+        : list(std::move(result)), leftButton(leftButton), rightButton(rightButton) {
         this->sortAndBuild();
     }
 
@@ -226,6 +243,10 @@ public:
         if (rows[index].blank) return recycler->dequeueReusableCell("Blank");
 
         auto* item = (SelectableHistoryCard*)recycler->dequeueReusableCell("Cell");
+
+        // 左右边缘再按方向键时，在「按钮区」和「记录区」之间切换
+        item->leftTarget  = [this]() -> brls::View* { return this->leftButton; };
+        item->rightTarget = [this]() -> brls::View* { return this->rightButton; };
 
         bilibili::HistoryVideoResult& r = this->list[rows[index].dataIndex];
         auto badge                      = r.badge;
@@ -332,12 +353,15 @@ private:
 
     bilibili::HistoryVideoListResult list;
     std::vector<Row> rows;
+    brls::View* leftButton  = nullptr;
+    brls::View* rightButton = nullptr;
 };
 
 MineHistory::MineHistory() {
     this->inflateFromXMLRes("xml/fragment/mine_history.xml");
     brls::Logger::debug("Fragment MineHistory: create");
 
+    recyclingGrid->setDefaultCellFocus(0);
     recyclingGrid->registerCell("Cell", []() { return new SelectableHistoryCard(); });
     recyclingGrid->registerCell("Blank", []() { return new BlankHistoryCell(); });
     recyclingGrid->onNextPage([this]() {
@@ -373,6 +397,15 @@ MineHistory::MineHistory() {
             }
         });
         bind(this->btnDelete, [this]() { this->deleteSelected(); });
+        bind(this->btnDone, [this]() { this->setEditMode(false); });
+
+        // 按钮区左右边缘向外切换回记录区
+        if (auto* nav = dynamic_cast<NavBox*>(this->btnToday.getView())) {
+            nav->setNextFocusResolver(brls::FocusDirection::LEFT, [this]() { return this->firstRecordView(); });
+        }
+        if (auto* nav = dynamic_cast<NavBox*>(this->btnDelete.getView())) {
+            nav->setNextFocusResolver(brls::FocusDirection::RIGHT, [this]() { return this->firstRecordView(); });
+        }
     }
 
     this->requestData();
@@ -389,6 +422,53 @@ void MineHistory::onCreate() {
                                 this->recyclingGrid->refresh();
                                 return true;
                             });
+
+    // 未登录时：长按 Enter 切换编辑态，编辑态短按 Enter 进入按钮区
+    auto* tab = this->getTabBar();
+    if (tab && !ProgramConfig::instance().hasLoginInfo()) {
+        tab->registerAction("", brls::ControllerButton::BUTTON_A,
+                            [this](brls::View*) -> bool {
+                                auto now = std::chrono::steady_clock::now();
+                                bool newPress =
+                                    !this->pressActive ||
+                                    now - this->lastPress > std::chrono::milliseconds(250);
+                                this->lastPress = now;
+                                if (newPress) {
+                                    this->pressActive = true;
+                                    this->pressStart  = now;
+                                    this->longFired   = false;
+                                    if (this->editing) {
+                                        brls::Application::giveFocus(this->btnToday);
+                                        return true;
+                                    }
+                                    return false;
+                                }
+                                if (!this->longFired &&
+                                    now - this->pressStart >= std::chrono::milliseconds(600)) {
+                                    this->longFired = true;
+                                    this->setEditMode(!this->editing);
+                                    return true;
+                                }
+                                return true;
+                            },
+                            true, true);
+    }
+}
+
+brls::View* MineHistory::firstRecordView() {
+    auto* ds = this->getDataSource();
+    if (!ds) return nullptr;
+    size_t count = ds->getItemCount();
+    for (size_t i = 0; i < count; i++) {
+        auto* item = this->recyclingGrid->getGridItemByIndex(i);
+        if (dynamic_cast<SelectableHistoryCard*>(item)) return item;
+    }
+    return nullptr;
+}
+
+brls::View* MineHistory::getDefaultFocus() {
+    auto* item = this->recyclingGrid->getGridItemByIndex(0);
+    return item ? item : this->recyclingGrid;
 }
 
 DataSourceMineHistoryVideoList* MineHistory::getDataSource() {
@@ -405,6 +485,7 @@ void MineHistory::setEditMode(bool value) {
     this->topBar->setVisibility(value ? brls::Visibility::VISIBLE : brls::Visibility::GONE);
     this->bottomBar->setVisibility(value ? brls::Visibility::VISIBLE : brls::Visibility::GONE);
     this->refreshCheckedStates();
+    if (this->onEditStateChanged) this->onEditStateChanged(value);
 }
 
 bool MineHistory::hasData() {
@@ -464,7 +545,8 @@ void MineHistory::onHistoryList(const bilibili::HistoryVideoResultWrapper& resul
                 recyclingGrid->notifyDataChanged();
             }
         } else {
-            recyclingGrid->setDataSource(new DataSourceMineHistoryVideoList(result.list));
+            recyclingGrid->setDataSource(new DataSourceMineHistoryVideoList(
+                result.list, this->btnToday.getView(), this->btnDelete.getView()));
             auto* ds = dynamic_cast<DataSourceMineHistoryVideoList*>(recyclingGrid->getDataSource());
             if (this->editing && ds) ds->setSelecting(true);
             this->topBar->setVisibility(this->editing ? brls::Visibility::VISIBLE : brls::Visibility::GONE);
