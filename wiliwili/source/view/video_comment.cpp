@@ -357,6 +357,8 @@ void VideoComment::setFocusIntoActions(bool value) {
     for (auto* box : boxes) {
         if (box) box->setFocusable(value);
     }
+    // 头像/昵称区域也只在详情页可聚焦，避免列表上下移动时误入卡片内部
+    if (this->userInfo) this->userInfo->setFocusable(value);
     if (this->picturesBox) {
         for (auto* child : this->picturesBox->getChildren()) {
             child->setFocusable(value);
