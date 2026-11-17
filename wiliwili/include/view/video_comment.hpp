@@ -81,7 +81,7 @@ public:
     void setReplyClickCallback(std::function<void()> cb);
 
     /// 是否允许按下方向键进入评论内的图片/操作图标（评论详情页启用）
-    void setFocusIntoActions(bool value) { this->focusIntoActions = value; }
+    void setFocusIntoActions(bool value);
 
     /// 非详情模式（或子评论）按下方向键时的动态目标：通常是下一条评论
     void setNextDownResolver(std::function<brls::View*()> resolver);

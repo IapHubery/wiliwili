@@ -129,6 +129,9 @@ VideoComment::VideoComment() {
         return true;
     });
     this->userInfo->addGestureRecognizer(new brls::TapGestureRecognizer(this->userInfo));
+
+    // 默认不进入卡片内的操作图标，详情页会再单独开启
+    this->setFocusIntoActions(false);
 }
 
 VideoComment::~VideoComment() { brls::Logger::verbose("View VideoComment: delete"); }
@@ -347,6 +350,20 @@ void VideoComment::flashAction(brls::Box* box, brls::Animatable& anim) {
     anim.start();
 }
 
+void VideoComment::setFocusIntoActions(bool value) {
+    this->focusIntoActions = value;
+
+    brls::Box* boxes[] = {this->likeBox.getView(), this->dislikeBox.getView(), this->replyBox.getView()};
+    for (auto* box : boxes) {
+        if (box) box->setFocusable(value);
+    }
+    if (this->picturesBox) {
+        for (auto* child : this->picturesBox->getChildren()) {
+            child->setFocusable(value);
+        }
+    }
+}
+
 void VideoComment::setNextDownResolver(std::function<brls::View*()> resolver) {
     this->downResolver = std::move(resolver);
 }
@@ -393,7 +410,7 @@ void VideoComment::buildPictures(const bilibili::VideoCommentResult& data) {
         const auto& picture = data.content.pictures[i];
 
         auto* holder = new NavBox();
-        holder->setFocusable(true);
+        holder->setFocusable(this->focusIntoActions);
         holder->setCornerRadius(8);
         holder->setPadding(3);
         holder->setMarginRight(8);
