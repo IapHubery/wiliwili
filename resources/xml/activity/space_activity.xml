@@ -1,7 +1,8 @@
 <brls:AppletFrame
         iconInterpolation="linear"
         headerHidden="true"
-        footerHidden="false">
+        footerHidden="true"
+        backgroundColor="@theme/brls/background">
     <brls:Box
             axis="column"
             width="auto"

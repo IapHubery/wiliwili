@@ -2,6 +2,7 @@
 // Created by fang on 2023/5/18.
 //
 
+#include <nanovg.h>
 #include <borealis/core/box.hpp>
 #include <borealis/core/application.hpp>
 #include <borealis/views/label.hpp>
@@ -13,6 +14,12 @@
 UserInfoView::UserInfoView() {
     this->inflateFromXMLRes("xml/views/user_info.xml");
     this->registerColorXMLAttribute("mainTextColor", [this](NVGcolor value) { this->setMainTextColor(value); });
+
+    // 关注按钮支持键盘 / 手柄聚焦，聚焦时高亮
+    this->boxHint->setFocusable(true);
+    this->boxHint->getFocusEvent()->subscribe([this](bool focused) {
+        this->boxHint->setBackgroundColor(focused ? nvgRGBA(0, 161, 214, 70) : nvgRGBA(0, 0, 0, 0));
+    });
 }
 
 UserInfoView::~UserInfoView() { ImageHelper::clear(this->avatarView); }
@@ -46,6 +53,13 @@ brls::Label* UserInfoView::getLabelName() { return this->labelUsername; }
 brls::Label* UserInfoView::getLabelMisc() { return this->labeMisc; }
 
 brls::Box* UserInfoView::getHintBox() { return this->boxHint; }
+
+brls::View* UserInfoView::getNextFocus(brls::FocusDirection direction, brls::View* currentView) {
+    if (direction == brls::FocusDirection::RIGHT && this->boxHint->getVisibility() == brls::Visibility::VISIBLE) {
+        return this->boxHint;
+    }
+    return brls::Box::getNextFocus(direction, currentView);
+}
 
 void UserInfoView::setHintType(InfoHintType type) {
     if (type == InfoHintType::NONE) {

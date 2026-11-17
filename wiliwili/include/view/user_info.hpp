@@ -46,6 +46,8 @@ public:
 
     void setHintType(InfoHintType type);
 
+    brls::View* getNextFocus(brls::FocusDirection direction, brls::View* currentView) override;
+
 private:
     BRLS_BIND(brls::Image, avatarView, "userinfo/avatar");
     BRLS_BIND(brls::Label, labelUsername, "userinfo/label/username");

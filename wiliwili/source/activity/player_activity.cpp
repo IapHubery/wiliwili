@@ -148,16 +148,8 @@ PlayerActivity::PlayerActivity(const std::string& bvid, uint64_t cid, int progre
 void PlayerActivity::onContentAvailable() {
     this->setCommonData();
 
-    // 点击标题查看简介
-    this->videoTitleBox->registerAction("wiliwili/player/intro"_i18n, brls::ControllerButton::BUTTON_A,
-                                        [this](brls::View* view) -> bool {
-                                            auto* evaluate = new PlayerEvaluate();
-                                            evaluate->setContent(this->videoDetailResult.desc);
-                                            auto dialog = new brls::Dialog(evaluate);
-                                            dialog->open();
-                                            return true;
-                                        });
-    this->videoTitleBox->addGestureRecognizer(new brls::TapGestureRecognizer(this->videoTitleBox));
+    // 标题仅用于展示，不参与键盘选择，也不响应点击
+    this->videoTitleBox->setFocusable(false);
 
     // 自动加载下一页评论
     this->recyclingGrid->onNextPage([this]() { this->requestVideoComment(std::to_string(this->videoDetailResult.aid)); });
