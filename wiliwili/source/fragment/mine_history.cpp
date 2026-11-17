@@ -468,7 +468,7 @@ brls::View* MineHistory::firstRecordView() {
 
 brls::View* MineHistory::getDefaultFocus() {
     auto* item = this->recyclingGrid->getGridItemByIndex(0);
-    return item ? item : this->recyclingGrid.getView();
+    return item ? static_cast<brls::View*>(item) : static_cast<brls::View*>(this->recyclingGrid.getView());
 }
 
 DataSourceMineHistoryVideoList* MineHistory::getDataSource() {
