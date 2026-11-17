@@ -21,6 +21,7 @@ class MineLater;
 namespace brls {
 class Label;
 class Image;
+class Box;
 }  // namespace brls
 
 class MineTab : public AttachedView, public UserHome {
@@ -58,5 +59,10 @@ private:
     BRLS_BIND(brls::Label, labelFollower, "mine/label/follower");
     BRLS_BIND(brls::Label, labelDynamic, "mine/label/dynamic");
 
-    loginStatusEvent loginCb;
+'    loginStatusEvent loginCb;
+
+    brls::Box* editBox     = nullptr;
+    brls::Label* editLabel = nullptr;
+
+    void toggleHistoryEdit();'
 };

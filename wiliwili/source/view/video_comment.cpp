@@ -11,6 +11,8 @@
 #include "utils/number_helper.hpp"
 #include "utils/string_helper.hpp"
 #include "utils/config_helper.hpp"
+#include <borealis/core/touch/tap_gesture.hpp>
+
 #include "utils/activity_helper.hpp"
 
 using namespace brls::literals;
@@ -99,6 +101,25 @@ VideoComment::VideoComment() {
     this->registerColorXMLAttribute("mainTextColor", [this](NVGcolor value) { this->setMainTextColor(value); });
 
     this->registerFloatXMLAttribute("maxRows", [this](float value) { this->setMaxRows((size_t)value); });
+
+    // 评论卡片上的点赞 / 点踩 / 回复图标直接响应，不再弹出操作菜单
+    this->svgLike->registerClickAction([this](brls::View*) {
+        if (this->likeCallback) this->likeCallback();
+        return true;
+    });
+    this->svgLike->addGestureRecognizer(new brls::TapGestureRecognizer(this->svgLike));
+
+    this->svgDislike->registerClickAction([this](brls::View*) {
+        if (this->dislikeCallback) this->dislikeCallback();
+        return true;
+    });
+    this->svgDislike->addGestureRecognizer(new brls::TapGestureRecognizer(this->svgDislike));
+
+    this->svgReply->registerClickAction([this](brls::View*) {
+        if (this->replyCallback) this->replyCallback();
+        return true;
+    });
+    this->svgReply->addGestureRecognizer(new brls::TapGestureRecognizer(this->svgReply));
 
     // 点击头像 / 昵称进入用户空间（未登录也可以）
     this->userInfo->registerClickAction([this](brls::View*) {
@@ -313,6 +334,16 @@ void VideoComment::setData(bilibili::VideoCommentResult data) {
     this->setLiked(data.action);
     this->setLikeNum(data.like);
     this->setReplyNum(data.rcount);
+
+    // 点击评论中的图片直接全屏查看（使用原图地址）
+    std::vector<std::string> pictures;
+    pictures.reserve(data.content.pictures.size());
+    for (auto& picture : data.content.pictures) {
+        pictures.push_back(ImageHelper::parseRawImageUrl(picture.img_src));
+    }
+    this->commentContent->setImageClickCallback([pictures](const std::string&) {
+        if (!pictures.empty()) Intent::openGallery(pictures);
+    });
 }
 
 bilibili::VideoCommentResult VideoComment::getData() { return this->comment_data; }
@@ -342,6 +373,12 @@ void VideoComment::setLiked(size_t action) {
 }
 
 void VideoComment::prepareForReuse() { this->userInfo->getAvatar()->setImageFromRes("pictures/default_avatar.png"); }
+
+void VideoComment::setLikeClickCallback(std::function<void()> cb) { this->likeCallback = std::move(cb); }
+
+void VideoComment::setDislikeClickCallback(std::function<void()> cb) { this->dislikeCallback = std::move(cb); }
+
+void VideoComment::setReplyClickCallback(std::function<void()> cb) { this->replyCallback = std::move(cb); }
 
 void VideoComment::hideReplyIcon(bool hide) {
     if (hide) {

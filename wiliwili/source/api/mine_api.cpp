@@ -378,6 +378,15 @@ void BilibiliClient::get_user_card(const std::string& mid,
     HTTP::getResultAsync<UserCardInfo>(Api::MemberCard, {{"mid", mid}}, callback, error);
 }
 
+void BilibiliClient::addWatchLater(const std::string& csrf, uint64_t aid,
+                                       const std::function<void()>& callback, const ErrorCallback& error) {
+    cpr::Payload payload = {
+        {"aid", std::to_string(aid)},
+        {"csrf", csrf},
+    };
+    HTTP::postResultAsync(Api::WatchLaterAdd, {}, payload, callback, error);
+}
+
 void BilibiliClient::get_user_videos(uint64_t mid, int pn, int ps,
                                      const std::function<void(UserUploadedVideoResultWrapper)>& callback,
                                      const ErrorCallback& error) {

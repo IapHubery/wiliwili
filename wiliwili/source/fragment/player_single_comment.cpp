@@ -93,6 +93,11 @@ public:
             item->setLineBottom(0);
             item->hideReplyIcon(true);
         }
+
+        // 直接点击卡片上的点赞 / 点踩 / 回复图标，不再弹出操作菜单
+        item->setLikeClickCallback([this, item, index]() { this->onCommentLike(item, index, 1); });
+        item->setDislikeClickCallback([this, item, index]() { this->onCommentLike(item, index, 2); });
+        item->setReplyClickCallback([this, recycler, index]() { this->onCommentReply(recycler, index); });
         return item;
     }
 
@@ -102,8 +107,8 @@ public:
         if (dataList[index].rpid == 0 || dataList[index].rpid == 1) {
             return;
         }
-        // 未登录也可以打开评论操作栏（查看图片等），点赞/回复会在操作栏里单独校验登录状态
-
+        // 已改为直接点击卡片上的图标交互，不再弹出操作菜单
+        return;
         auto* item = dynamic_cast<VideoComment*>(recycler->getGridItemByIndex(index));
         if (!item) return;
 
@@ -191,6 +196,51 @@ public:
                 }
             });
         });
+    }
+
+    void onCommentLike(VideoComment* item, size_t index, size_t clicked) {
+        auto& itemData = this->dataList[index];
+        size_t action  = itemData.action == clicked ? 0 : clicked;
+        bool isLike    = action == 1 || (action == 0 && itemData.action == 1);
+
+        if (action == 1) {
+            itemData.like++;
+        } else if (itemData.action == 1) {
+            itemData.like--;
+        }
+        itemData.action = action;
+        item->setLiked(itemData.action);
+        item->setLikeNum(itemData.like);
+
+        if (index == 0) {
+            likeState->fire(itemData.action);
+            likeNum->fire(itemData.like);
+        }
+
+        if (isLike) {
+            this->commentLike(std::to_string(itemData.oid), itemData.rpid, itemData.action, commentType);
+        } else {
+            this->commentDislike(std::to_string(itemData.oid), itemData.rpid, itemData.action, commentType);
+        }
+    }
+
+    void onCommentReply(RecyclingGrid* recycler, size_t index) {
+        if (!DialogHelper::checkLogin()) return;
+        brls::Application::getImeManager()->openForText(
+            [this, index, recycler](std::string text) {
+                this->updateCommentLabelNum(recycler, dataList[0].rcount + 1);
+                auto& itemData = dataList[index];
+                if (itemData.rpid != itemData.root) {
+                    text = fmt::format("回复 @{} :{}", itemData.member.uname, text);
+                }
+                this->commentReply(text, std::to_string(itemData.oid), itemData.rpid, itemData.root, commentType,
+                                   [this, recycler](const bilibili::VideoCommentAddResult& result) {
+                                       this->dataList.insert(dataList.begin() + 2, result.reply);
+                                       recycler->reloadData();
+                                       brls::Application::giveFocus(recycler);
+                                   });
+            },
+            "", "", 500, "", 0);
     }
 
     void updateCommentLabelNum(RecyclingGrid* recycler, size_t wholeNum) {

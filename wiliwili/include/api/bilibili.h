@@ -190,6 +190,11 @@ public:
                                const ErrorCallback& error                                     = nullptr);
 
     // 稍后再看 watch later
+    /// 添加到稍后再看
+    static void addWatchLater(const std::string& csrf, uint64_t aid,
+                              const std::function<void()>& callback = nullptr,
+                              const ErrorCallback& error            = nullptr);
+
     static void getWatchLater(const std::function<void(WatchLaterListWrapper)>& callback = nullptr,
                               const ErrorCallback& error                                 = nullptr);
 

@@ -60,20 +60,7 @@
             </brls:Box>
         </brls:Box>
 
-        <brls:Box
-                id="mine/history/done"
-                height="36"
-                cornerRadius="18"
-                backgroundColor="@theme/color/bilibili"
-                paddingLeft="18"
-                paddingRight="18"
-                alignItems="center"
-                focusable="true">
-            <brls:Label
-                    text="@i18n/wiliwili/mine/local_done"
-                    fontSize="17"
-                    textColor="#FFFFFF"/>
-        </brls:Box>
+
     </brls:Box>
 
     <RecyclingGrid

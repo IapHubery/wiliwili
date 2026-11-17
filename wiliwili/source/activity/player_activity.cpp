@@ -186,12 +186,12 @@ void PlayerActivity::onContentAvailable() {
         return true;
     });
 
-    // 稍后再看按钮（未登录时保存到本地列表，登录后由官方接口管理）
+    // 稍后再看按钮：未登录保存到本地列表，登录后调用官方接口
     this->btnLater->setImageFromSVGRes("svg/widget-bookmark.svg");
-    if (ProgramConfig::instance().hasLoginInfo()) {
-        this->btnLater->getParent()->setVisibility(brls::Visibility::GONE);
-    } else {
-        this->btnLater->getParent()->registerClickAction([this](...) {
+    auto* laterBox = this->btnLater->getParent();
+    laterBox->registerClickAction([this](...) {
+        if (this->videoDetailResult.bvid.empty()) return true;
+        if (!ProgramConfig::instance().hasLoginInfo()) {
             LocalVideoItem item;
             item.bvid     = this->videoDetailResult.bvid;
             item.aid      = this->videoDetailResult.aid;
@@ -204,10 +204,21 @@ void PlayerActivity::onContentAvailable() {
             item.view_at  = (int64_t)wiliwili::getUnixTime();
             bool added    = LocalStore::instance().toggleLater(item);
             ToastHelper::show(added ? "wiliwili/mine/local_later_added"_i18n
-                                            : "wiliwili/mine/local_later_removed"_i18n);
-            return true;
-        });
-    }
+                                    : "wiliwili/mine/local_later_removed"_i18n);
+        } else {
+            std::string csrf = ProgramConfig::instance().getCSRF();
+            if (csrf.empty()) {
+                ToastHelper::show("wiliwili/home/common/no_login"_i18n);
+                return true;
+            }
+            BILI::addWatchLater(
+                csrf, this->videoDetailResult.aid,
+                []() { ToastHelper::show("wiliwili/mine/local_later_added"_i18n); },
+                [](BILI_ERR) { ToastHelper::showBottom(error); });
+        }
+        return true;
+    });
+    laterBox->addGestureRecognizer(new brls::TapGestureRecognizer(laterBox));
 
     // 二维码按钮
     this->btnQR->getParent()->registerClickAction([this](...) {

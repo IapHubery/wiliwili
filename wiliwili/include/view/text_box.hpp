@@ -5,6 +5,7 @@
 #pragma once
 
 #include <borealis/views/label.hpp>
+#include <functional>
 #include "utils/image_helper.hpp"
 #include "utils/number_helper.hpp"
 
@@ -95,6 +96,12 @@ public:
 
     RichTextData& getRichText();
 
+    /// 设置点击富文本中图片的回调（仅对宽度 >= 60 的图片生效）
+    void setImageClickCallback(std::function<void(const std::string&)> cb);
+
+    /// 根据 TextBox 本地坐标查找图片 url，找不到返回空
+    std::string getImageUrlAt(float x, float y);
+
     void setText(const std::string& text) override;
 
     void onLayout() override;
@@ -137,4 +144,5 @@ protected:
     std::vector<RichTextData> lineContent;
 
     bool parsedDone = false;
+    std::function<void(const std::string&)> imageClickCallback = nullptr;
 };

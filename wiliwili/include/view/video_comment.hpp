@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include <functional>
+
 #include "view/recycling_grid.hpp"
 #include "view/user_info.hpp"
 #include "bilibili/result/video_detail_result.h"
@@ -71,6 +73,11 @@ public:
 
     void hideReplyIcon(bool hide);
 
+    /// 直接点击评论卡片上的图标时触发（不再弹出操作菜单）
+    void setLikeClickCallback(std::function<void()> cb);
+    void setDislikeClickCallback(std::function<void()> cb);
+    void setReplyClickCallback(std::function<void()> cb);
+
     void prepareForReuse() override;
 
     void cacheForReuse() override;
@@ -85,4 +92,7 @@ protected:
     BRLS_BIND(SVGImage, svgLike, "comment/svg/like");
     BRLS_BIND(SVGImage, svgDislike, "comment/svg/dislike");
     bilibili::VideoCommentResult comment_data;
+    std::function<void()> likeCallback     = nullptr;
+    std::function<void()> dislikeCallback  = nullptr;
+    std::function<void()> replyCallback    = nullptr;
 };

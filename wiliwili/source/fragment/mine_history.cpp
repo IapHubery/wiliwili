@@ -168,6 +168,28 @@ public:
 
     void clearSelection() { selected.clear(); }
 
+    bool isRowSelected(size_t row) const {
+        if (row >= rows.size() || rows[row].blank) return false;
+        const std::string& bvid = list[rows[row].dataIndex].history.bvid;
+        return !bvid.empty() && selected.count(bvid) > 0;
+    }
+
+    void toggleSelectAll() {
+        size_t total = 0;
+        for (const auto& item : list) {
+            if (!item.history.bvid.empty()) total++;
+        }
+        if (total == 0) return;
+        if (selected.size() >= total) {
+            selected.clear();
+            return;
+        }
+        selected.clear();
+        for (const auto& item : list) {
+            if (!item.history.bvid.empty()) selected.insert(item.history.bvid);
+        }
+    }
+
     /// 0=今天 1=昨天 2=更早；整组已选中时再次点击则取消整组
     void selectRange(int which) {
         std::string today     = localDayKey((int64_t)wiliwili::getUnixTime());
@@ -329,12 +351,10 @@ MineHistory::MineHistory() {
         this->requestData(true);
     });
 
+    this->topBar->setVisibility(brls::Visibility::GONE);
     this->bottomBar->setVisibility(brls::Visibility::GONE);
 
-    if (ProgramConfig::instance().hasLoginInfo()) {
-        // 本地列表的筛选/删除功能只对未登录的本地数据开放
-        this->topBar->setVisibility(brls::Visibility::GONE);
-    } else {
+    if (!ProgramConfig::instance().hasLoginInfo()) {
         auto bind = [this](brls::Box* box, std::function<void()> action) {
             box->registerClickAction([action](brls::View*) {
                 action();
@@ -346,18 +366,10 @@ MineHistory::MineHistory() {
         bind(this->btnToday, [this]() { this->selectRange(0); });
         bind(this->btnYesterday, [this]() { this->selectRange(1); });
         bind(this->btnOlder, [this]() { this->selectRange(2); });
-        bind(this->btnDone, [this]() {
-            if (auto* ds = this->getDataSource(); ds && ds->isSelecting()) {
-                this->exitSelection();
-            } else {
-                this->enterSelection();
-            }
-        });
         bind(this->btnSelectAll, [this]() {
-            if (auto* ds = this->getDataSource(); ds) {
-                this->enterSelection();
-                ds->selectAll();
-                this->recyclingGrid->reloadData();
+            if (auto* ds = this->getDataSource()) {
+                ds->toggleSelectAll();
+                this->refreshCheckedStates();
             }
         });
         bind(this->btnDelete, [this]() { this->deleteSelected(); });
@@ -383,30 +395,38 @@ DataSourceMineHistoryVideoList* MineHistory::getDataSource() {
     return dynamic_cast<DataSourceMineHistoryVideoList*>(this->recyclingGrid->getDataSource());
 }
 
-void MineHistory::enterSelection() {
-    auto* ds = this->getDataSource();
-    if (!ds) return;
-    ds->setSelecting(true);
-    this->bottomBar->setVisibility(brls::Visibility::VISIBLE);
-    this->recyclingGrid->reloadData();
+void MineHistory::setEditMode(bool value) {
+    this->editing = value;
+    auto* ds      = this->getDataSource();
+    if (ds) {
+        ds->setSelecting(value);
+        if (!value) ds->clearSelection();
+    }
+    this->topBar->setVisibility(value ? brls::Visibility::VISIBLE : brls::Visibility::GONE);
+    this->bottomBar->setVisibility(value ? brls::Visibility::VISIBLE : brls::Visibility::GONE);
+    this->refreshCheckedStates();
 }
 
-void MineHistory::exitSelection() {
+bool MineHistory::hasData() {
     auto* ds = this->getDataSource();
-    if (ds) {
-        ds->setSelecting(false);
-        ds->clearSelection();
+    return ds && ds->getItemCount() > 0;
+}
+
+void MineHistory::refreshCheckedStates() {
+    auto* ds = this->getDataSource();
+    if (!ds) return;
+    size_t count = ds->getItemCount();
+    for (size_t i = 0; i < count; i++) {
+        auto* card = dynamic_cast<SelectableHistoryCard*>(this->recyclingGrid->getGridItemByIndex(i));
+        if (card) card->setChecked(ds->isRowSelected(i));
     }
-    this->bottomBar->setVisibility(brls::Visibility::GONE);
-    this->recyclingGrid->reloadData();
 }
 
 void MineHistory::selectRange(int which) {
     auto* ds = this->getDataSource();
     if (!ds) return;
-    if (!ds->isSelecting()) this->enterSelection();
     ds->selectRange(which);
-    this->recyclingGrid->reloadData();
+    this->refreshCheckedStates();
 }
 
 void MineHistory::deleteSelected() {
@@ -425,7 +445,6 @@ void MineHistory::deleteSelected() {
             LocalStore::instance().removeHistory(bvid);
         }
         ToastHelper::show("wiliwili/mine/local_deleted"_i18n);
-        this->exitSelection();
         this->recyclingGrid->showSkeleton();
         this->requestData(true);
     });
@@ -446,7 +465,12 @@ void MineHistory::onHistoryList(const bilibili::HistoryVideoResultWrapper& resul
             }
         } else {
             recyclingGrid->setDataSource(new DataSourceMineHistoryVideoList(result.list));
-            this->bottomBar->setVisibility(brls::Visibility::GONE);
+            auto* ds = dynamic_cast<DataSourceMineHistoryVideoList*>(recyclingGrid->getDataSource());
+            if (this->editing && ds) ds->setSelecting(true);
+            this->topBar->setVisibility(this->editing ? brls::Visibility::VISIBLE : brls::Visibility::GONE);
+            this->bottomBar->setVisibility(this->editing ? brls::Visibility::VISIBLE : brls::Visibility::GONE);
+            this->refreshCheckedStates();
+            if (this->onHistoryDataChanged) this->onHistoryDataChanged(!result.list.empty());
         }
     });
 }

@@ -53,7 +53,35 @@ public:
         VideoComment* item = (VideoComment*)recycler->dequeueReusableCell("Cell");
 
         item->setData(this->dataList[index - 2]);
+
+        // 直接点击卡片上的点赞 / 点踩 / 回复图标，不再依赖操作菜单
+        item->setLikeClickCallback([this, item, index]() { this->onCommentLike(item, index, 1); });
+        item->setDislikeClickCallback([this, item, index]() { this->onCommentLike(item, index, 2); });
+        item->setReplyClickCallback([this, recycler, index]() { this->onItemSelected(recycler, index); });
         return item;
+    }
+
+    void onCommentLike(VideoComment* item, size_t index, size_t clicked) {
+        if (index < 2 || index - 2 >= this->dataList.size()) return;
+        if (!DialogHelper::checkLogin()) return;
+        auto& itemData = this->dataList[index - 2];
+        size_t action  = itemData.action == clicked ? 0 : clicked;
+        bool isLike    = action == 1 || (action == 0 && itemData.action == 1);
+
+        if (action == 1) {
+            itemData.like++;
+        } else if (itemData.action == 1) {
+            itemData.like--;
+        }
+        itemData.action = action;
+        item->setLiked(itemData.action);
+        item->setLikeNum(itemData.like);
+
+        if (isLike) {
+            this->commentLike(std::to_string(itemData.oid), itemData.rpid, itemData.action, 1);
+        } else {
+            this->commentDislike(std::to_string(itemData.oid), itemData.rpid, itemData.action, 1);
+        }
     }
 
     size_t getItemCount() override { return dataList.size() + 2; }

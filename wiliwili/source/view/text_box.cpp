@@ -10,6 +10,7 @@
 #include <cmath>
 #include <yoga/YGNode.h>
 #include <borealis/core/application.hpp>
+#include <borealis/core/touch/tap_gesture.hpp>
 
 #include "view/text_box.hpp"
 
@@ -112,6 +113,15 @@ TextBox::TextBox() {
     this->registerStringXMLAttribute("text", [this](const std::string& value) { this->setText(value); });
 
     YGNodeSetMeasureFunc(this->ygNode, textBoxMeasureFunc);
+
+    // 点击富文本中的大图（评论图片）时触发回调
+    this->addGestureRecognizer(new brls::TapGestureRecognizer(
+        [this](brls::TapGestureStatus status, brls::Sound* sound) {
+            if (!this->imageClickCallback) return;
+            if (status.state != brls::GestureState::END) return;
+            std::string url = this->getImageUrlAt(status.position.x - this->getX(), status.position.y - this->getY());
+            if (!url.empty()) this->imageClickCallback(url);
+        }));
 
     // todo 因为 nanovg 限制每个富文本结尾的\n和开头的空格不会被渲染
 }
@@ -263,6 +273,25 @@ float TextBox::cutRichTextLines(float width) {
 
     // 限制最大行数
     return getLineY(maxRows) + fontSize;
+}
+
+void TextBox::setImageClickCallback(std::function<void(const std::string&)> cb) {
+    this->imageClickCallback = std::move(cb);
+}
+
+std::string TextBox::getImageUrlAt(float x, float y) {
+    for (auto& line : this->lineContent) {
+        for (auto& component : line) {
+            if (component->type != RichTextType::Image) continue;
+            auto* image = (RichTextImage*)component.get();
+            // 过滤掉表情（表情尺寸较小），只处理评论图片
+            if (image->width < 60) continue;
+            if (x >= image->x && x <= image->x + image->width && y >= image->y && y <= image->y + image->height) {
+                return image->url;
+            }
+        }
+    }
+    return {};
 }
 
 float TextBox::getLineY(size_t line) {

@@ -2,6 +2,8 @@
 // Created by fang on 2022/6/9.
 //
 
+#include <nanovg.h>
+#include <borealis/core/application.hpp>
 #include <borealis/core/thread.hpp>
 #include <borealis/core/touch/tap_gesture.hpp>
 #include <borealis/views/dialog.hpp>
@@ -21,6 +23,10 @@
 #include "bilibili/result/mine_result.h"
 #include "utils/shortcut_helper.hpp"
 
+#ifdef ABSOLUTE
+#undef ABSOLUTE
+#endif
+
 using namespace brls;
 using namespace brls::literals;
 
@@ -30,6 +36,8 @@ MineTab::MineTab() {
 
     this->loginCb.subscribe([this](bilibili::LoginInfo status) {
         if (status == bilibili::LoginInfo::SUCCESS) {
+            if (this->mineHistory && this->mineHistory->isEditing()) this->toggleHistoryEdit();
+            if (this->editBox) this->editBox->setVisibility(brls::Visibility::GONE);
             brls::Logger::debug("{}", "wiliwili/mine/login/success"_i18n);
             this->requestData();
             try {
@@ -75,6 +83,47 @@ MineTab::MineTab() {
             }
         }
     });
+
+    // 历史记录编辑按钮：与顶部标签栏同高、水平居右（仅未登录的本地历史可用）
+    if (!ProgramConfig::instance().hasLoginInfo() && this->mineHistory) {
+        auto* sidebar = this->tabFrame->getSidebar();
+        if (sidebar) {
+            this->editBox = new brls::Box();
+            this->editBox->setPositionType(brls::PositionType::ABSOLUTE);
+            this->editBox->setPositionRight(20);
+            this->editBox->setPositionTop(14);
+            this->editBox->setHeight(36);
+            this->editBox->setCornerRadius(18);
+            this->editBox->setBackgroundColor(brls::Application::getTheme().getColor("color/bilibili"));
+            this->editBox->setPaddingLeft(16);
+            this->editBox->setPaddingRight(16);
+            this->editBox->setJustifyContent(brls::JustifyContent::CENTER);
+            this->editBox->setAlignItems(brls::AlignItems::CENTER);
+            this->editBox->setFocusable(true);
+            this->editLabel = new brls::Label();
+            this->editLabel->setText("wiliwili/mine/local_edit"_i18n);
+            this->editLabel->setFontSize(16);
+            this->editLabel->setTextColor(nvgRGB(255, 255, 255));
+            this->editBox->addView(this->editLabel);
+            this->editBox->registerClickAction([this](brls::View*) {
+                this->toggleHistoryEdit();
+                return true;
+            });
+            this->editBox->addGestureRecognizer(new brls::TapGestureRecognizer(this->editBox));
+            this->editBox->setVisibility(brls::Visibility::GONE);
+            sidebar->addView(this->editBox);
+        }
+
+        this->mineHistory->onHistoryDataChanged = [this](bool hasData) {
+            if (!this->editBox) return;
+            if (!hasData && this->mineHistory->isEditing()) this->toggleHistoryEdit();
+            this->editBox->setVisibility(hasData ? brls::Visibility::VISIBLE : brls::Visibility::GONE);
+        };
+        if (this->editBox && this->mineHistory) {
+            this->editBox->setVisibility(this->mineHistory->hasData() ? brls::Visibility::VISIBLE
+                                                                     : brls::Visibility::GONE);
+        }
+    }
 
     // 初始化用户区域内容
     this->onUserNotLogin();
@@ -138,6 +187,18 @@ void MineTab::onUserNotLogin() {
         labelFollower->setText("0");
         labelFollowing->setText("0");
     });
+}
+
+void MineTab::toggleHistoryEdit() {
+    if (!this->mineHistory) return;
+    bool editing = this->mineHistory->isEditing();
+    this->mineHistory->setEditMode(!editing);
+    if (this->editLabel) {
+        this->editLabel->setText(editing ? "wiliwili/mine/local_edit"_i18n : "wiliwili/mine/local_done"_i18n);
+    }
+    if (this->boxGotoUserSpace) {
+        this->boxGotoUserSpace->setVisibility(editing ? brls::Visibility::VISIBLE : brls::Visibility::GONE);
+    }
 }
 
 void MineTab::onUserInfo(const bilibili::UserResult& data) {
