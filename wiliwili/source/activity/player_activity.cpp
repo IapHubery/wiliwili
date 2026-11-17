@@ -173,7 +173,7 @@ void PlayerActivity::onContentAvailable() {
     this->videoTitleBox->addGestureRecognizer(new brls::TapGestureRecognizer(this->videoTitleBox));
 
     // 焦点顺序：标题 ↓ 用户信息 → 关注 → 点赞，点赞 ← 关注
-    if (auto* nav = dynamic_cast<NavBox*>(this->videoTitleBox)) {
+    if (auto* nav = dynamic_cast<NavBox*>(this->videoTitleBox.getView())) {
         nav->setNextFocus(brls::FocusDirection::DOWN, this->videoUserInfo);
     }
     auto* hintBox = this->videoUserInfo->getHintBox();
