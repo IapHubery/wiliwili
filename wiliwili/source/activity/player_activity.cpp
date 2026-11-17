@@ -26,6 +26,7 @@
 #include "view/video_card.hpp"
 #include "view/user_info.hpp"
 #include "view/mpv_core.hpp"
+#include "view/nav_box.hpp"
 
 using namespace brls::literals;
 
@@ -170,6 +171,19 @@ void PlayerActivity::onContentAvailable() {
                                             return true;
                                         });
     this->videoTitleBox->addGestureRecognizer(new brls::TapGestureRecognizer(this->videoTitleBox));
+
+    // 焦点顺序：标题 ↓ 用户信息 → 关注 → 点赞，点赞 ← 关注
+    if (auto* nav = dynamic_cast<NavBox*>(this->videoTitleBox)) {
+        nav->setNextFocus(brls::FocusDirection::DOWN, this->videoUserInfo);
+    }
+    auto* hintBox = this->videoUserInfo->getHintBox();
+    if (auto* nav = dynamic_cast<NavBox*>(hintBox)) {
+        nav->setNextFocus(brls::FocusDirection::LEFT, this->videoUserInfo);
+        nav->setNextFocus(brls::FocusDirection::RIGHT, this->btnAgree->getParent());
+    }
+    if (auto* nav = dynamic_cast<NavBox*>(this->btnAgree->getParent())) {
+        nav->setNextFocus(brls::FocusDirection::LEFT, hintBox);
+    }
 
     // 自动加载下一页评论
     this->recyclingGrid->onNextPage([this]() { this->requestVideoComment(std::to_string(this->videoDetailResult.aid)); });

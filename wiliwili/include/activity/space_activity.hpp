@@ -23,6 +23,7 @@ public:
 
     void onContentAvailable() override;
 
+    BRLS_BIND(brls::Box, headerBox, "space/header");
     BRLS_BIND(brls::Image, avatar, "space/avatar");
     BRLS_BIND(brls::Label, nameLabel, "space/name");
     BRLS_BIND(brls::Label, descLabel, "space/desc");

@@ -36,6 +36,7 @@
 #include "view/video_view.hpp"
 #include "view/user_info.hpp"
 #include "view/text_box.hpp"
+#include "view/nav_box.hpp"
 #include "view/qr_image.hpp"
 #include "view/svg_image.hpp"
 #include "view/up_user_small.hpp"
@@ -77,6 +78,7 @@ void Register::initCustomView() {
     brls::Application::registerXMLView("GalleryView", GalleryView::create);
     brls::Application::registerXMLView("CustomButton", CustomButton::create);
     brls::Application::registerXMLView("HintLabel", HintLabel::create);
+    brls::Application::registerXMLView("NavBox", NavBox::create);
 
     //     Register custom views
     brls::Application::registerXMLView("UserInfoView", UserInfoView::create);

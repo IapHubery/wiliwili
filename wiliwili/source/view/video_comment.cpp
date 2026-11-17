@@ -11,6 +11,7 @@
 
 #include "view/video_comment.hpp"
 #include "view/text_box.hpp"
+#include "view/nav_box.hpp"
 #include "view/svg_image.hpp"
 #include "utils/number_helper.hpp"
 #include "utils/string_helper.hpp"
@@ -346,6 +347,17 @@ void VideoComment::flashAction(brls::Box* box, brls::Animatable& anim) {
     anim.start();
 }
 
+brls::View* VideoComment::getNextFocus(brls::FocusDirection direction, brls::View* currentView) {
+    if (direction == brls::FocusDirection::DOWN && this->focusIntoActions) {
+        if (this->picturesBox && this->picturesBox->getVisibility() == brls::Visibility::VISIBLE &&
+            !this->picturesBox->getChildren().empty()) {
+            return this->picturesBox->getChildren().front();
+        }
+        if (this->likeBox) return this->likeBox;
+    }
+    return RecyclingGridItem::getNextFocus(direction, currentView);
+}
+
 void VideoComment::buildPictures(const bilibili::VideoCommentResult& data) {
     this->picturesBox->clearViews(true);
     if (data.content.pictures.empty()) {
@@ -360,10 +372,11 @@ void VideoComment::buildPictures(const bilibili::VideoCommentResult& data) {
         rawPictures.push_back(ImageHelper::parseRawImageUrl(picture.img_src));
     }
 
+    std::vector<NavBox*> holders;
     for (size_t i = 0; i < data.content.pictures.size(); i++) {
         const auto& picture = data.content.pictures[i];
 
-        auto* holder = new brls::Box();
+        auto* holder = new NavBox();
         holder->setFocusable(true);
         holder->setCornerRadius(8);
         holder->setPadding(3);
@@ -406,6 +419,14 @@ void VideoComment::buildPictures(const bilibili::VideoCommentResult& data) {
         });
 
         this->picturesBox->addView(holder);
+        holders.push_back(holder);
+    }
+
+    // 图片之间左右移动，向下进入点赞按钮
+    for (size_t i = 0; i < holders.size(); i++) {
+        if (i + 1 < holders.size()) holders[i]->setNextFocus(brls::FocusDirection::RIGHT, holders[i + 1]);
+        if (i > 0) holders[i]->setNextFocus(brls::FocusDirection::LEFT, holders[i - 1]);
+        holders[i]->setNextFocus(brls::FocusDirection::DOWN, this->likeBox);
     }
 }
 

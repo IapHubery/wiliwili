@@ -87,6 +87,9 @@ void SpaceActivity::onContentAvailable() {
     this->requestUserInfo();
     this->grid->showSkeleton();
     this->requestVideos(true);
+
+    // 默认聚焦左上角的用户信息栏
+    brls::Application::giveFocus(this->headerBox);
 }
 
 void SpaceActivity::updateDesc() {

@@ -57,7 +57,7 @@
 
     </brls:Box>
 
-    <brls:Box
+    <NavBox
             id="userinfo/box/hint"
             visibility="gone"
             width="100"
@@ -77,6 +77,6 @@
                 textColor="@theme/font/grey"
                 fontSize="16"
                 marginTop="1"/>
-    </brls:Box>
+    </NavBox>
 
 </brls:Box>

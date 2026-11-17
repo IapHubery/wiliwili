@@ -85,6 +85,7 @@ public:
         VideoComment* item = (VideoComment*)recycler->dequeueReusableCell("Cell");
 
         item->setData(this->dataList[index]);
+        item->setFocusIntoActions(true);
         if (index == 0) {
             item->setLineColor(nvgRGBA(180, 180, 180, 60));
             item->setLineBottom(1);

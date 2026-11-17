@@ -10,6 +10,8 @@
             grow="1">
 
         <brls:Box
+                id="space/header"
+                focusable="true"
                 axis="row"
                 width="100%"
                 height="auto"
