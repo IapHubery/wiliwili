@@ -11,6 +11,8 @@
 
 #include <functional>
 
+#include <borealis/core/animation.hpp>
+
 #include "view/recycling_grid.hpp"
 #include "view/user_info.hpp"
 #include "bilibili/result/video_detail_result.h"
@@ -99,6 +101,12 @@ protected:
     std::function<void()> likeCallback     = nullptr;
     std::function<void()> dislikeCallback  = nullptr;
     std::function<void()> replyCallback    = nullptr;
+
+    brls::Animatable likeFlash;
+    brls::Animatable dislikeFlash;
+    brls::Animatable replyFlash;
+
+    void flashAction(brls::Box* box, brls::Animatable& anim);
 
 private:
     void buildPictures(const bilibili::VideoCommentResult& data);

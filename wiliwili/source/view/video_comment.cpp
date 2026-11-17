@@ -106,24 +106,21 @@ VideoComment::VideoComment() {
 
     this->registerFloatXMLAttribute("maxRows", [this](float value) { this->setMaxRows((size_t)value); });
 
-    // 评论卡片上的点赞 / 点踩 / 回复：可聚焦高亮，点击 / Enter / 手柄确定直接触发
-    auto bindAction = [this](brls::Box* box, std::function<void()>* action) {
-        box->registerClickAction([box, action](brls::View*) {
-            brls::Application::giveFocus(box);
+    // 评论卡片上的点赞 / 点踩 / 回复：点击 / Enter / 手柄确定触发，高亮短暂闪现后消失
+    auto bindAction = [this](brls::Box* box, std::function<void()>* action, brls::Animatable* flash) {
+        auto activate = [this, box, action, flash]() {
             if (action && *action) (*action)();
+            this->flashAction(box, *flash);
+        };
+        box->registerClickAction([activate](brls::View*) {
+            activate();
             return true;
         });
-        box->addGestureRecognizer(new brls::TapGestureRecognizer(box, [box, action]() {
-            brls::Application::giveFocus(box);
-            if (action && *action) (*action)();
-        }));
-        box->getFocusEvent()->subscribe([box](bool focused) {
-            box->setBackgroundColor(focused ? nvgRGBA(0, 161, 214, 70) : nvgRGBA(0, 0, 0, 0));
-        });
+        box->addGestureRecognizer(new brls::TapGestureRecognizer(box, activate));
     };
-    bindAction(this->likeBox, &this->likeCallback);
-    bindAction(this->dislikeBox, &this->dislikeCallback);
-    bindAction(this->replyBox, &this->replyCallback);
+    bindAction(this->likeBox, &this->likeCallback, &this->likeFlash);
+    bindAction(this->dislikeBox, &this->dislikeCallback, &this->dislikeFlash);
+    bindAction(this->replyBox, &this->replyCallback, &this->replyFlash);
 
     // 点击头像 / 昵称进入用户空间（未登录也可以）
     this->userInfo->registerClickAction([this](brls::View*) {
@@ -335,6 +332,19 @@ void VideoComment::setLiked(size_t action) {
 }
 
 void VideoComment::prepareForReuse() { this->userInfo->getAvatar()->setImageFromRes("pictures/default_avatar.png"); }
+
+void VideoComment::flashAction(brls::Box* box, brls::Animatable& anim) {
+    if (!box) return;
+    box->setBackgroundColor(nvgRGBA(0, 161, 214, 70));
+    anim.reset(1.0f);
+    anim.addStep(1.0f, 220, brls::EasingFunction::linear);
+    anim.addStep(0.0f, 180, brls::EasingFunction::quadraticOut);
+    anim.setTickCallback([box, &anim]() {
+        box->setBackgroundColor(nvgRGBA(0, 161, 214, (unsigned char)(70 * anim.getValue())));
+    });
+    anim.setEndCallback([box](bool) { box->setBackgroundColor(nvgRGBA(0, 0, 0, 0)); });
+    anim.start();
+}
 
 void VideoComment::buildPictures(const bilibili::VideoCommentResult& data) {
     this->picturesBox->clearViews(true);
