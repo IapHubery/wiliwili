@@ -57,7 +57,10 @@ public:
         // 直接点击卡片上的点赞 / 点踩 / 回复图标，不再依赖操作菜单
         item->setLikeClickCallback([this, item, index]() { this->onCommentLike(item, index, 1); });
         item->setDislikeClickCallback([this, item, index]() { this->onCommentLike(item, index, 2); });
-        item->setReplyClickCallback([this, recycler, index]() { this->onItemSelected(recycler, index); });
+        item->setReplyClickCallback([this, recycler, index]() {
+            if (!DialogHelper::checkLogin()) return;
+            this->onItemSelected(recycler, index);
+        });
         return item;
     }
 

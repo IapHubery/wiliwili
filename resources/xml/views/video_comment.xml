@@ -37,43 +37,78 @@
     </brls:Box>
 
     <brls:Box
+            id="comment/pictures"
+            marginLeft="40"
+            marginRight="8"
+            marginBottom="4"
+            width="auto"
+            height="auto"
+            axis="row"/>
+
+    <brls:Box
             marginLeft="40"
             marginRight="8"
             marginBottom="8"
             shrink="0"
             width="auto"
             alignItems="center"
-            height="32">
-        <SVGImage
-                id="comment/svg/like"
-                width="24"
-                height="24"
-                SVG="@res/svg/comment-agree-grey.svg"/>
-        <brls:Label
-                id="comment/label/like"
-                marginLeft="4"
-                marginRight="30"
-                textColor="@theme/font/grey"
-                fontSize="16"
-                text="29"/>
-        <SVGImage
-                id="comment/svg/dislike"
-                width="24"
-                height="24"
-                marginRight="30"
-                SVG="@res/svg/comment-disagree-grey.svg"/>
-        <SVGImage
-                id="comment/svg/reply"
-                width="24"
-                height="24"
-                SVG="@res/svg/comment-replay-grey.svg"/>
-        <brls:Label
-                id="comment/label/reply"
-                marginLeft="4"
-                marginRight="10"
-                textColor="@theme/font/grey"
-                fontSize="16"
-                text="29"/>
+            height="40">
+        <brls:Box
+                id="comment/action/like"
+                focusable="true"
+                height="32"
+                cornerRadius="16"
+                paddingLeft="4"
+                paddingRight="4"
+                alignItems="center">
+            <SVGImage
+                    id="comment/svg/like"
+                    width="24"
+                    height="24"
+                    SVG="@res/svg/comment-agree-grey.svg"/>
+            <brls:Label
+                    id="comment/label/like"
+                    marginLeft="4"
+                    marginRight="16"
+                    textColor="@theme/font/grey"
+                    fontSize="16"
+                    text="29"/>
+        </brls:Box>
+        <brls:Box
+                id="comment/action/dislike"
+                focusable="true"
+                height="32"
+                cornerRadius="16"
+                paddingLeft="4"
+                paddingRight="12"
+                alignItems="center">
+            <SVGImage
+                    id="comment/svg/dislike"
+                    width="24"
+                    height="24"
+                    SVG="@res/svg/comment-disagree-grey.svg"/>
+        </brls:Box>
+        <brls:Box
+                id="comment/action/reply"
+                focusable="true"
+                height="32"
+                cornerRadius="16"
+                paddingLeft="4"
+                paddingRight="4"
+                alignItems="center">
+            <SVGImage
+                    id="comment/svg/reply"
+                    width="24"
+                    height="24"
+                    SVG="@res/svg/comment-replay-grey.svg"/>
+            <brls:Label
+                    id="comment/label/reply"
+                    marginLeft="4"
+                    marginRight="10"
+                    textColor="@theme/font/grey"
+                    fontSize="16"
+                    text="29"/>
+        </brls:Box>
     </brls:Box>
 
 </brls:Box>

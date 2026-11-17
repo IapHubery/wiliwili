@@ -2,7 +2,11 @@
 // Created by fang on 2022/7/18.
 //
 
+#include <algorithm>
+#include <chrono>
+
 #include <borealis/core/touch/tap_gesture.hpp>
+#include <borealis/views/image.hpp>
 #include <pystring.h>
 
 #include "view/video_comment.hpp"
@@ -102,24 +106,24 @@ VideoComment::VideoComment() {
 
     this->registerFloatXMLAttribute("maxRows", [this](float value) { this->setMaxRows((size_t)value); });
 
-    // 评论卡片上的点赞 / 点踩 / 回复图标直接响应，不再弹出操作菜单
-    this->svgLike->registerClickAction([this](brls::View*) {
-        if (this->likeCallback) this->likeCallback();
-        return true;
-    });
-    this->svgLike->addGestureRecognizer(new brls::TapGestureRecognizer(this->svgLike));
-
-    this->svgDislike->registerClickAction([this](brls::View*) {
-        if (this->dislikeCallback) this->dislikeCallback();
-        return true;
-    });
-    this->svgDislike->addGestureRecognizer(new brls::TapGestureRecognizer(this->svgDislike));
-
-    this->svgReply->registerClickAction([this](brls::View*) {
-        if (this->replyCallback) this->replyCallback();
-        return true;
-    });
-    this->svgReply->addGestureRecognizer(new brls::TapGestureRecognizer(this->svgReply));
+    // 评论卡片上的点赞 / 点踩 / 回复：可聚焦高亮，点击 / Enter / 手柄确定直接触发
+    auto bindAction = [this](brls::Box* box, std::function<void()>* action) {
+        box->registerClickAction([box, action](brls::View*) {
+            brls::Application::giveFocus(box);
+            if (action && *action) (*action)();
+            return true;
+        });
+        box->addGestureRecognizer(new brls::TapGestureRecognizer(box, [box, action]() {
+            brls::Application::giveFocus(box);
+            if (action && *action) (*action)();
+        }));
+        box->getFocusEvent()->subscribe([box](bool focused) {
+            box->setBackgroundColor(focused ? nvgRGBA(0, 161, 214, 70) : nvgRGBA(0, 0, 0, 0));
+        });
+    };
+    bindAction(this->likeBox, &this->likeCallback);
+    bindAction(this->dislikeBox, &this->dislikeCallback);
+    bindAction(this->replyBox, &this->replyCallback);
 
     // 点击头像 / 昵称进入用户空间（未登录也可以）
     this->userInfo->registerClickAction([this](brls::View*) {
@@ -259,42 +263,7 @@ void VideoComment::setData(bilibili::VideoCommentResult data) {
         start = i + 1;
     }
 
-    // 笔记图片
-    if (!data.content.pictures.empty()) d.emplace_back(std::make_shared<RichTextSpan>("\n\n", textColor));
-
-    static constexpr float smallSize = 68;
-    static constexpr float bigSize   = 108;
-
-    if (data.content.pictures.size() == 1) {
-        // 只有一张图片时，按图片的比例显示
-        float maxSize = brls::Application::ORIGINAL_WINDOW_WIDTH < 1280 ? smallSize * 3 : bigSize * 3;
-        auto& picture = data.content.pictures[0];
-        float size = bigSize;
-        float w = size, h = size;
-        if (picture.img_height == 0 || picture.img_width == 0) {
-        } else if (picture.img_height > picture.img_width) {
-            h = picture.img_height / picture.img_width * w;
-            if (h > maxSize) h = maxSize;
-        } else {
-            w = picture.img_width / picture.img_height * h;
-            if (w > maxSize) w = maxSize;
-        }
-
-        auto item = std::make_shared<RichTextImage>(
-            ImageHelper::parseNoteImageUrl(picture.img_src, w * ImageHelper::note_small, h * ImageHelper::note_small),
-            w, h);
-        item->t_margin = 8;
-        d.emplace_back(item);
-    } else {
-        // 多张图片显示为正方形缩略图
-        float size = brls::Application::ORIGINAL_WINDOW_WIDTH < 1280 ? smallSize : bigSize;
-        for (auto& picture : data.content.pictures) {
-            auto item      = std::make_shared<RichTextImage>(picture.img_src + ImageHelper::note_ext, size, size);
-            item->r_margin = 8;
-            item->t_margin = 8;
-            d.emplace_back(item);
-        }
-    }
+    // 图片改为下方的可聚焦缩略图（buildPictures），不再嵌入富文本
 
     // 设置富文本
     this->commentContent->setRichText(d);
@@ -335,15 +304,8 @@ void VideoComment::setData(bilibili::VideoCommentResult data) {
     this->setLikeNum(data.like);
     this->setReplyNum(data.rcount);
 
-    // 点击评论中的图片直接全屏查看（使用原图地址）
-    std::vector<std::string> pictures;
-    pictures.reserve(data.content.pictures.size());
-    for (auto& picture : data.content.pictures) {
-        pictures.push_back(ImageHelper::parseRawImageUrl(picture.img_src));
-    }
-    this->commentContent->setImageClickCallback([pictures](const std::string&) {
-        if (!pictures.empty()) Intent::openGallery(pictures);
-    });
+    this->buildPictures(data);
+
 }
 
 bilibili::VideoCommentResult VideoComment::getData() { return this->comment_data; }
@@ -373,6 +335,69 @@ void VideoComment::setLiked(size_t action) {
 }
 
 void VideoComment::prepareForReuse() { this->userInfo->getAvatar()->setImageFromRes("pictures/default_avatar.png"); }
+
+void VideoComment::buildPictures(const bilibili::VideoCommentResult& data) {
+    this->picturesBox->clearViews(true);
+    if (data.content.pictures.empty()) {
+        this->picturesBox->setVisibility(brls::Visibility::GONE);
+        return;
+    }
+    this->picturesBox->setVisibility(brls::Visibility::VISIBLE);
+
+    std::vector<std::string> rawPictures;
+    rawPictures.reserve(data.content.pictures.size());
+    for (const auto& picture : data.content.pictures) {
+        rawPictures.push_back(ImageHelper::parseRawImageUrl(picture.img_src));
+    }
+
+    for (size_t i = 0; i < data.content.pictures.size(); i++) {
+        const auto& picture = data.content.pictures[i];
+
+        auto* holder = new brls::Box();
+        holder->setFocusable(true);
+        holder->setCornerRadius(8);
+        holder->setPadding(3);
+        holder->setMarginRight(8);
+        holder->setMarginTop(8);
+        holder->setBackgroundColor(nvgRGBA(0, 0, 0, 0));
+
+        auto* image = new brls::Image();
+        image->setWidth(150);
+        image->setHeight(95);
+        image->setCornerRadius(6);
+        ImageHelper::with(image)->load(ImageHelper::parseNoteImageUrl(picture.img_src, 300, 190));
+        holder->addView(image);
+
+        auto openGallery = [rawPictures, i]() {
+            std::vector<std::string> list = rawPictures;
+            if (i < list.size()) std::rotate(list.begin(), list.begin() + i, list.end());
+            Intent::openGallery(list);
+        };
+
+        holder->registerClickAction([openGallery](brls::View*) {
+            openGallery();
+            return true;
+        });
+
+        // 单击选中并高亮，双击打开大图
+        auto lastClick = std::make_shared<std::chrono::steady_clock::time_point>();
+        holder->addGestureRecognizer(new brls::TapGestureRecognizer(holder, [holder, openGallery, lastClick]() {
+            brls::Application::giveFocus(holder);
+            auto now = std::chrono::steady_clock::now();
+            if (lastClick->time_since_epoch().count() > 0 &&
+                std::chrono::duration_cast<std::chrono::milliseconds>(now - *lastClick).count() < 400) {
+                openGallery();
+            }
+            *lastClick = now;
+        }));
+
+        holder->getFocusEvent()->subscribe([holder](bool focused) {
+            holder->setBackgroundColor(focused ? nvgRGBA(0, 161, 214, 90) : nvgRGBA(0, 0, 0, 0));
+        });
+
+        this->picturesBox->addView(holder);
+    }
+}
 
 void VideoComment::setLikeClickCallback(std::function<void()> cb) { this->likeCallback = std::move(cb); }
 

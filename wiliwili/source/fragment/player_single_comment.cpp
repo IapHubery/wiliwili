@@ -199,6 +199,7 @@ public:
     }
 
     void onCommentLike(VideoComment* item, size_t index, size_t clicked) {
+        if (!DialogHelper::checkLogin()) return;
         auto& itemData = this->dataList[index];
         size_t action  = itemData.action == clicked ? 0 : clicked;
         bool isLike    = action == 1 || (action == 0 && itemData.action == 1);

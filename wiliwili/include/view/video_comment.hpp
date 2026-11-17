@@ -87,6 +87,10 @@ protected:
     BRLS_BIND(brls::Label, labelLike, "comment/label/like");
     BRLS_BIND(brls::Label, labelReply, "comment/label/reply");
     BRLS_BIND(UserInfoView, userInfo, "comment/userinfo");
+    BRLS_BIND(brls::Box, picturesBox, "comment/pictures");
+    BRLS_BIND(brls::Box, likeBox, "comment/action/like");
+    BRLS_BIND(brls::Box, dislikeBox, "comment/action/dislike");
+    BRLS_BIND(brls::Box, replyBox, "comment/action/reply");
     BRLS_BIND(SVGImage, userLevel, "comment/user/level");
     BRLS_BIND(SVGImage, svgReply, "comment/svg/reply");
     BRLS_BIND(SVGImage, svgLike, "comment/svg/like");
@@ -95,4 +99,7 @@ protected:
     std::function<void()> likeCallback     = nullptr;
     std::function<void()> dislikeCallback  = nullptr;
     std::function<void()> replyCallback    = nullptr;
+
+private:
+    void buildPictures(const bilibili::VideoCommentResult& data);
 };
