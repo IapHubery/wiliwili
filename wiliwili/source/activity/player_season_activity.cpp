@@ -84,6 +84,12 @@ void PlayerSeasonActivity::reportCurrentProgress(size_t progress, size_t duratio
         item.duration = duration > 0 ? (int)duration : (int)this->episodeResult.duration;
         int p         = (int)progress;
         if (item.duration > 0 && p >= item.duration - 3) p = -1;
+        for (const auto& h : LocalStore::instance().getHistory()) {
+            if (h.type == "pgc" && h.ep_id == item.ep_id && h.progress == -1) {
+                p = -1;
+                break;
+            }
+        }
         item.progress = p;
         item.view_at  = (int64_t)wiliwili::getUnixTime();
         LocalStore::instance().addHistory(item);

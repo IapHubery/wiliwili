@@ -562,6 +562,12 @@ void PlayerActivity::reportCurrentProgress(size_t progress, size_t duration) {
         item.duration = duration > 0 ? (int)duration : this->videoDetailResult.duration;
         int p         = (int)progress;
         if (item.duration > 0 && p >= item.duration - 3) p = -1;  // 已看完
+        for (const auto& h : LocalStore::instance().getHistory()) {
+            if (h.type == "archive" && h.bvid == item.bvid && h.progress == -1) {
+                p = -1;
+                break;
+            }
+        }
         item.progress = p;
         item.view_at  = (int64_t)wiliwili::getUnixTime();
         LocalStore::instance().addHistory(item);
