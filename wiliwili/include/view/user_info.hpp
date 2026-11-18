@@ -54,6 +54,7 @@ public:
         this->nextFocusOverride = std::move(cb);
     }
 
+    InfoHintType hintType  = InfoHintType::NONE;
     NVGcolor hintBackground = {};
     NVGcolor hintTextColor  = {};
     std::function<brls::View*(brls::FocusDirection)> nextFocusOverride = nullptr;

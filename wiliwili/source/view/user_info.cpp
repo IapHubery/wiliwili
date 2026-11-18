@@ -18,9 +18,12 @@ UserInfoView::UserInfoView() {
     // 关注按钮支持键盘 / 手柄聚焦，聚焦时高亮
     this->boxHint->setFocusable(true);
     this->boxHint->getFocusEvent()->subscribe([this](bool focused) {
-        this->boxHint->setBackgroundColor(focused ? nvgRGBA(0, 161, 214, 235) : this->hintBackground);
-        this->labeHint->setTextColor(
-            focused ? brls::Application::getTheme().getColor("brls/text") : this->hintTextColor);
+        bool notFollowed = this->hintType == InfoHintType::UP_NOT_FOLLOWED ||
+                           this->hintType == InfoHintType::BANGUMI_NOT_FOLLOWED ||
+                           this->hintType == InfoHintType::CINEMA_NOT_FOLLOWED;
+        this->boxHint->setBackgroundColor(
+            focused ? (notFollowed ? nvgRGB(230, 90, 130) : nvgRGB(0, 161, 214)) : this->hintBackground);
+        this->labeHint->setTextColor(focused ? nvgRGB(255, 255, 255) : this->hintTextColor);
     });
 }
 
@@ -67,6 +70,7 @@ brls::View* UserInfoView::getNextFocus(brls::FocusDirection direction, brls::Vie
 }
 
 void UserInfoView::setHintType(InfoHintType type) {
+    this->hintType = type;
     if (type == InfoHintType::NONE) {
         this->boxHint->setVisibility(brls::Visibility::GONE);
         return;
@@ -85,7 +89,7 @@ void UserInfoView::setHintType(InfoHintType type) {
             this->labeHint->setTextColor(this->hintTextColor);
             break;
         case InfoHintType::UP_NOT_FOLLOWED:
-            this->hintBackground = theme.getColor("color/bilibili");
+            this->hintBackground = nvgRGB(251, 114, 153);
             this->boxHint->setBackgroundColor(this->hintBackground);
             this->svgHint->setImageFromSVGRes("svg/bpx-svg-sprite-add.svg");
             this->labeHint->setText("关注");
@@ -101,7 +105,7 @@ void UserInfoView::setHintType(InfoHintType type) {
             this->labeHint->setTextColor(this->hintTextColor);
             break;
         case InfoHintType::BANGUMI_NOT_FOLLOWED:
-            this->hintBackground = theme.getColor("color/bilibili");
+            this->hintBackground = nvgRGB(251, 114, 153);
             this->boxHint->setBackgroundColor(this->hintBackground);
             this->svgHint->setImageFromSVGRes("svg/bpx-svg-sprite-add.svg");
             this->labeHint->setText("追番");
@@ -117,7 +121,7 @@ void UserInfoView::setHintType(InfoHintType type) {
             this->labeHint->setTextColor(this->hintTextColor);
             break;
         case InfoHintType::CINEMA_NOT_FOLLOWED:
-            this->hintBackground = theme.getColor("color/bilibili");
+            this->hintBackground = nvgRGB(251, 114, 153);
             this->boxHint->setBackgroundColor(this->hintBackground);
             this->svgHint->setImageFromSVGRes("svg/bpx-svg-sprite-add.svg");
             this->labeHint->setText("追剧");

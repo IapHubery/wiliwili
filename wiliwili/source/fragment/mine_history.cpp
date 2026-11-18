@@ -133,8 +133,13 @@ public:
 
     std::function<brls::View*()> leftTarget  = nullptr;
     std::function<brls::View*()> rightTarget = nullptr;
+    std::function<brls::View*()> downTarget  = nullptr;
 
     brls::View* getNextFocus(brls::FocusDirection direction, brls::View* currentView) override {
+        if (direction == brls::FocusDirection::DOWN && this->downTarget) {
+            if (auto* next = this->downTarget()) return next;
+            return this;
+        }
         size_t column = this->getIndex() % 4;
         if (direction == brls::FocusDirection::LEFT && column == 0 && this->leftTarget) {
             if (auto* view = this->leftTarget()) return view;
@@ -245,7 +250,17 @@ public:
         }
         if (targets.empty()) return;
 
-        for (const auto& bvid : targets) selected.insert(bvid);
+        bool allSelected = true;
+        for (const auto& bvid : targets) {
+            if (!selected.count(bvid)) {
+                allSelected = false;
+                break;
+            }
+        }
+        for (const auto& bvid : targets) {
+            if (allSelected) selected.erase(bvid);
+            else selected.insert(bvid);
+        }
     }
 
     RecyclingGridItem* cellForRow(RecyclingGrid* recycler, size_t index) override {
@@ -258,6 +273,13 @@ public:
         // 左右边缘再按方向键时，在「按钮区」和「记录区」之间切换
         item->leftTarget  = [this]() -> brls::View* { return this->leftButton; };
         item->rightTarget = [this]() -> brls::View* { return this->rightButton; };
+        item->downTarget  = [recycler, index, this]() -> brls::View* {
+            size_t next = index + HISTORY_GRID_SPAN;
+            if (next < this->rows.size() && !this->rows[next].blank) {
+                return recycler->getGridItemByIndex(next);
+            }
+            return nullptr;
+        };
 
         bilibili::HistoryVideoResult& r = this->list[rows[index].dataIndex];
         auto badge                      = r.badge;
@@ -622,9 +644,8 @@ void MineHistory::updateDeleteLabel() {
     auto* ds = this->getDataSource();
     size_t count = ds ? ds->getSelected().size() : 0;
     this->deleteLabel->setText(fmt::format("{} ({})", "wiliwili/mine/local_delete"_i18n, count));
-    this->deleteLabel->setTextColor(
-        count > 0 ? brls::Application::getTheme().getColor("brls/text")
-                  : brls::Application::getTheme().getColor("font/grey"));
+    this->deleteLabel->setTextColor(count > 0 ? nvgRGB(255, 255, 255)
+                                             : brls::Application::getTheme().getColor("font/grey"));
     this->btnDelete->setAlpha(count > 0 ? 1.0f : 0.45f);
 }
 
