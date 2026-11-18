@@ -20,12 +20,20 @@ bilibili::HistoryVideoResult historyFromLocal(const LocalVideoItem& item) {
     result.view_at     = (int)item.view_at;
     result.duration    = item.duration;
     result.progress    = item.progress;
-    result.live_status = 0;
+    result.live_status = item.type == "live" ? 1 : 0;
     result.history.bvid     = item.bvid;
     result.history.cid      = item.cid;
     result.history.oid      = item.aid;
     result.history.epid     = 0;
     result.history.business = "archive";
+    if (item.type == "pgc") {
+        result.history.business = "pgc";
+        result.history.epid     = item.ep_id;
+        result.history.oid      = item.aid;
+    } else if (item.type == "live") {
+        result.history.business = "live";
+        result.history.oid      = item.room_id;
+    }
     result.history.dt       = 0;
     return result;
 }

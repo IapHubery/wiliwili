@@ -17,6 +17,7 @@ UserInfoView::UserInfoView() {
 
     // 关注按钮支持键盘 / 手柄聚焦，聚焦时高亮
     this->boxHint->setFocusable(true);
+    this->boxHint->setHideHighlightBackground(true);
     this->boxHint->getFocusEvent()->subscribe([this](bool focused) {
         bool notFollowed = this->hintType == InfoHintType::UP_NOT_FOLLOWED ||
                            this->hintType == InfoHintType::BANGUMI_NOT_FOLLOWED ||

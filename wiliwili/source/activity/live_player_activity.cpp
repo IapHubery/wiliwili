@@ -15,6 +15,7 @@
 
 #include "utils/shader_helper.hpp"
 #include "utils/config_helper.hpp"
+#include "utils/local_store.hpp"
 #include "utils/dialog_helper.hpp"
 
 #include "view/video_view.hpp"
@@ -76,7 +77,21 @@ LiveActivity::LiveActivity(int roomid, const std::string& name, const std::strin
     this->liveData.watched_show.text_large = views.empty() ? "获取中..." : views;
     this->liveData.uname                   = ""; // 初始为空，待获取
     this->liveData.cover                   = ""; // 初始为空，待获取
-    
+
+    if (!ProgramConfig::instance().hasLoginInfo()) {
+        LocalVideoItem item;
+        item.type     = "live";
+        item.bvid     = fmt::format("live{}", roomid);
+        item.room_id  = roomid;
+        item.title    = this->liveData.title;
+        item.cover    = "";
+        item.author   = "";
+        item.duration = 0;
+        item.progress = 0;
+        item.view_at  = (int64_t)wiliwili::getUnixTime();
+        LocalStore::instance().addHistory(item);
+    }
+
     this->setCommonData();
 }
 

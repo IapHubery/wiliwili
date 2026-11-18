@@ -66,10 +66,21 @@ std::string historyDayLabel(int64_t timestamp) {
 
 void openHistoryItem(const bilibili::HistoryVideoResult& item) {
     const auto& data = item.history;
+    int localProgress = -1;
+    for (const auto& h : LocalStore::instance().getHistory()) {
+        if (data.business == "archive" && h.type == "archive" && h.bvid == data.bvid) {
+            localProgress = h.progress;
+            break;
+        }
+        if (data.business == "pgc" && h.type == "pgc" && h.ep_id == data.epid) {
+            localProgress = h.progress;
+            break;
+        }
+    }
     if (data.business == "archive") {
-        Intent::openBV(data.bvid, data.cid, -1);
+        Intent::openBV(data.bvid, data.cid, localProgress > 0 ? localProgress : -1);
     } else if (data.business == "pgc") {
-        Intent::openSeasonByEpId(data.epid, -1);
+        Intent::openSeasonByEpId(data.epid, localProgress);
     } else if (data.business == "live") {
         if (item.live_status) {
             Intent::openLive(data.oid, item.title, "-");

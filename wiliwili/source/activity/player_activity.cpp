@@ -552,6 +552,7 @@ void PlayerActivity::reportCurrentProgress(size_t progress, size_t duration) {
         // 未登录：把播放进度写入本地历史记录
         if (this->videoDetailResult.bvid.empty()) return;
         LocalVideoItem item;
+        item.type     = "archive";
         item.bvid     = this->videoDetailResult.bvid;
         item.aid      = this->videoDetailResult.aid;
         item.cid      = this->videoDetailPage.cid;
@@ -559,7 +560,9 @@ void PlayerActivity::reportCurrentProgress(size_t progress, size_t duration) {
         item.cover    = this->videoDetailResult.pic;
         item.author   = this->videoDetailResult.owner.name;
         item.duration = duration > 0 ? (int)duration : this->videoDetailResult.duration;
-        item.progress = (int)progress;
+        int p         = (int)progress;
+        if (item.duration > 0 && p >= item.duration - 3) p = -1;  // 已看完
+        item.progress = p;
         item.view_at  = (int64_t)wiliwili::getUnixTime();
         LocalStore::instance().addHistory(item);
         return;

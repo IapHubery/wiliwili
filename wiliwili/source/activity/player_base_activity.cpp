@@ -601,7 +601,17 @@ void BasePlayerActivity::onVideoPlayUrl(const bilibili::VideoUrlResult& result) 
 
     // 未登录时把播放记录保存到本地（我的 - 历史记录）
     if (!ProgramConfig::instance().hasLoginInfo() && !this->videoDetailResult.bvid.empty()) {
+        int savedProgress = 0;
+        bool hasSaved     = false;
+        for (const auto& h : LocalStore::instance().getHistory()) {
+            if (h.type == "archive" && h.bvid == this->videoDetailResult.bvid) {
+                savedProgress = h.progress;
+                hasSaved      = true;
+                break;
+            }
+        }
         LocalVideoItem item;
+        item.type     = "archive";
         item.bvid     = this->videoDetailResult.bvid;
         item.aid      = this->videoDetailResult.aid;
         item.cid      = this->videoDetailPage.cid;
@@ -609,13 +619,26 @@ void BasePlayerActivity::onVideoPlayUrl(const bilibili::VideoUrlResult& result) 
         item.cover    = this->videoDetailResult.pic;
         item.author   = this->videoDetailResult.owner.name;
         item.duration = this->videoDetailResult.duration;
-        item.progress = std::max(0, this->getProgress());
+        // 已看完（-1）保留标记；未看完保留原进度，新视频从 0 开始
+        item.progress = hasSaved ? savedProgress : 0;
         item.view_at  = (int64_t)wiliwili::getUnixTime();
         LocalStore::instance().addHistory(item);
     }
 
-    // 获取预设的跳转位置
-    int start    = this->getProgress();
+    // 获取预设的跳转位置；未登录时优先使用本地历史进度
+    int start = this->getProgress();
+    if (!ProgramConfig::instance().hasLoginInfo()) {
+        start = 0;
+        for (const auto& h : LocalStore::instance().getHistory()) {
+            if (h.type == "archive" && h.bvid == this->videoDetailResult.bvid) {
+                if (h.progress > 0 && h.progress != -1 &&
+                    (h.duration <= 0 || h.progress < h.duration - 3)) {
+                    start = h.progress;
+                }
+                break;
+            }
+        }
+    }
     int end      = -1;
     int clipOpen = result.clipOpen, clipEnd = result.clipEnd;
     int time_sec = result.timelength / 1000;

@@ -14,12 +14,14 @@
 #include "fragment/season_evaluate.hpp"
 #include "fragment/share_dialog.hpp"
 #include "utils/config_helper.hpp"
+#include "utils/local_store.hpp"
 #include "utils/dialog_helper.hpp"
 #include "utils/toast_helper.hpp"
 #include "utils/number_helper.hpp"
 #include "utils/image_helper.hpp"
 #include "utils/shortcut_helper.hpp"
 #include "view/video_view.hpp"
+#include "view/nav_box.hpp"
 #include "view/video_card.hpp"
 #include "view/svg_image.hpp"
 #include "view/mpv_core.hpp"
@@ -68,6 +70,25 @@ void PlayerSeasonActivity::setProgress(int p) { episodeResult.progress = p; }
 int PlayerSeasonActivity::getProgress() { return episodeResult.progress; }
 
 void PlayerSeasonActivity::reportCurrentProgress(size_t progress, size_t duration) {
+    if (!ProgramConfig::instance().hasLoginInfo()) {
+        if (this->episodeResult.id == 0) return;
+        LocalVideoItem item;
+        item.type     = "pgc";
+        item.bvid     = fmt::format("ep{}", this->episodeResult.id);
+        item.ep_id    = this->episodeResult.id;
+        item.aid      = this->episodeResult.aid;
+        item.cid      = this->episodeResult.cid;
+        item.title    = this->seasonInfo.season_title + " - " + this->episodeResult.title;
+        item.cover    = this->seasonInfo.cover;
+        item.author   = this->seasonInfo.season_title;
+        item.duration = duration > 0 ? (int)duration : (int)this->episodeResult.duration;
+        int p         = (int)progress;
+        if (item.duration > 0 && p >= item.duration - 3) p = -1;
+        item.progress = p;
+        item.view_at  = (int64_t)wiliwili::getUnixTime();
+        LocalStore::instance().addHistory(item);
+        return;
+    }
     this->reportHistory(episodeResult.aid, episodeResult.cid, progress, duration, 4);
 }
 
@@ -96,6 +117,16 @@ void PlayerSeasonActivity::onIndexChangeToNext() {
 
 void PlayerSeasonActivity::onContentAvailable() {
     this->setCommonData();
+
+    // 追番按钮与关注按钮保持一致的左右焦点路径
+    auto* hint = this->videoUserInfo->getHintBox();
+    if (auto* nav = dynamic_cast<NavBox*>(hint)) {
+        nav->setNextFocus(brls::FocusDirection::LEFT, this->videoUserInfo);
+        nav->setNextFocus(brls::FocusDirection::RIGHT, this->btnAgree->getParent());
+    }
+    if (auto* nav = dynamic_cast<NavBox*>(this->btnAgree->getParent())) {
+        nav->setNextFocus(brls::FocusDirection::LEFT, hint);
+    }
 
     this->videoTitleBox->registerAction("wiliwili/player/intro"_i18n, brls::ControllerButton::BUTTON_A,
                                         [this](brls::View* view) -> bool {

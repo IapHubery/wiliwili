@@ -14,11 +14,14 @@
 /// 本地保存的视频条目（历史记录 / 稍后再看 / 收藏 共用）
 struct LocalVideoItem {
     std::string bvid;
+    std::string type = "archive";  // archive / pgc / live
     std::string title;
     std::string cover;
     std::string author;
     uint64_t aid     = 0;
     uint64_t cid     = 0;
+    uint64_t ep_id   = 0;
+    uint64_t room_id = 0;
     int duration     = 0;
     int progress     = 0;
     int64_t view_at  = 0;
@@ -26,11 +29,14 @@ struct LocalVideoItem {
 
 inline void to_json(nlohmann::json& j, const LocalVideoItem& item) {
     j = nlohmann::json{{"bvid", item.bvid},
+                       {"type", item.type},
                        {"title", item.title},
                        {"cover", item.cover},
                        {"author", item.author},
                        {"aid", item.aid},
                        {"cid", item.cid},
+                       {"ep_id", item.ep_id},
+                       {"room_id", item.room_id},
                        {"duration", item.duration},
                        {"progress", item.progress},
                        {"view_at", item.view_at}};
@@ -42,11 +48,14 @@ inline void from_json(const nlohmann::json& j, LocalVideoItem& item) {
         if (iter != j.end() && !iter->is_null()) iter->get_to(out);
     };
     read("bvid", item.bvid);
+    read("type", item.type);
     read("title", item.title);
     read("cover", item.cover);
     read("author", item.author);
     read("aid", item.aid);
     read("cid", item.cid);
+    read("ep_id", item.ep_id);
+    read("room_id", item.room_id);
     read("duration", item.duration);
     read("progress", item.progress);
     read("view_at", item.view_at);
