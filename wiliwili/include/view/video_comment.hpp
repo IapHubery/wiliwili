@@ -80,8 +80,11 @@ public:
     void setDislikeClickCallback(std::function<void()> cb);
     void setReplyClickCallback(std::function<void()> cb);
 
-    /// 是否允许按下方向键进入评论内的图片/操作图标（评论详情页启用）
+    /// 是否允许按 Enter 进入评论内部（评论详情页启用）
     void setFocusIntoActions(bool value);
+
+    /// 上一条评论（子评论向上回到父评论/上一条子评论）
+    void setPrevResolver(std::function<brls::View*()> resolver);
 
     /// 非详情模式（或子评论）按下方向键时的动态目标：通常是下一条评论
     void setNextDownResolver(std::function<brls::View*()> resolver);
@@ -111,13 +114,21 @@ protected:
     std::function<void()> dislikeCallback  = nullptr;
     std::function<void()> replyCallback    = nullptr;
     bool focusIntoActions                  = false;
+    bool internal                          = false;
+    bool actionsRegistered                 = false;
     std::function<brls::View*()> downResolver = nullptr;
+    std::function<brls::View*()> prevResolver = nullptr;
 
     brls::Animatable likeFlash;
     brls::Animatable dislikeFlash;
     brls::Animatable replyFlash;
 
     void flashAction(brls::Box* box, brls::Animatable& anim);
+
+    void enterInternal();
+    void exitInternal();
+    void applyChildFocus(bool value);
+    brls::View* lastPicture();
 
     brls::View* getNextFocus(brls::FocusDirection direction, brls::View* currentView) override;
 

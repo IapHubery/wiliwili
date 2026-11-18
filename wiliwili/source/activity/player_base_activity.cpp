@@ -68,6 +68,13 @@ public:
             }
             return nullptr;
         });
+        item->setPrevResolver([this, recycler, index]() -> brls::View* {
+            for (size_t i = index; i > 0; i--) {
+                auto* prev = recycler->getGridItemByIndex(i - 1);
+                if (dynamic_cast<VideoComment*>(prev)) return prev;
+            }
+            return nullptr;
+        });
         return item;
     }
 

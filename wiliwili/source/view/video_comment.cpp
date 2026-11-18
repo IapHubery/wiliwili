@@ -352,22 +352,49 @@ void VideoComment::flashAction(brls::Box* box, brls::Animatable& anim) {
 
 void VideoComment::setFocusIntoActions(bool value) {
     this->focusIntoActions = value;
+    if (!value) this->internal = false;
+    this->applyChildFocus(this->internal && value);
 
+    if (value && !this->actionsRegistered) {
+        this->actionsRegistered = true;
+        this->registerAction("", brls::ControllerButton::BUTTON_A,
+                             [this](brls::View*) -> bool {
+                                 if (!this->focusIntoActions) return false;
+                                 this->enterInternal();
+                                 return true;
+                             },
+                             true);
+        this->registerAction("", brls::ControllerButton::BUTTON_B,
+                             [this](brls::View*) -> bool {
+                                 if (!this->internal) return false;
+                                 this->exitInternal();
+                                 return true;
+                             },
+                             true);
+    }
+}
+
+void VideoComment::applyChildFocus(bool value) {
     brls::Box* boxes[] = {this->likeBox.getView(), this->dislikeBox.getView(), this->replyBox.getView()};
     for (auto* box : boxes) {
         if (box) box->setFocusable(value);
     }
-    // 头像/昵称区域也只在详情页可聚焦，避免列表上下移动时误入卡片内部
     if (this->userInfo) {
         this->userInfo->setFocusable(value);
         if (value) {
             this->userInfo->setNextFocusOverride([this](brls::FocusDirection direction) -> brls::View* {
-                if (direction != brls::FocusDirection::DOWN) return nullptr;
-                if (this->picturesBox && this->picturesBox->getVisibility() == brls::Visibility::VISIBLE &&
-                    !this->picturesBox->getChildren().empty()) {
-                    return this->picturesBox->getChildren().front();
+                if (direction == brls::FocusDirection::UP) {
+                    this->exitInternal();
+                    return this;
                 }
-                return this->likeBox.getView();
+                if (direction == brls::FocusDirection::DOWN) {
+                    if (auto* last = this->lastPicture()) {
+                        auto* children = &this->picturesBox->getChildren();
+                        return children->empty() ? this->likeBox.getView() : children->front();
+                    }
+                    return this->likeBox.getView();
+                }
+                return nullptr;
             });
         } else {
             this->userInfo->setNextFocusOverride(nullptr);
@@ -378,6 +405,42 @@ void VideoComment::setFocusIntoActions(bool value) {
             child->setFocusable(value);
         }
     }
+    for (auto* box : boxes) {
+        if (auto* nav = dynamic_cast<NavBox*>(box)) {
+            if (value) {
+                nav->setNextFocusResolver(brls::FocusDirection::UP, [this]() -> brls::View* {
+                    if (auto* last = this->lastPicture()) return last;
+                    return this->userInfo.getView();
+                });
+            } else {
+                nav->setNextFocusResolver(brls::FocusDirection::UP, nullptr);
+            }
+        }
+    }
+}
+
+void VideoComment::enterInternal() {
+    if (!this->focusIntoActions) return;
+    this->internal = true;
+    this->applyChildFocus(true);
+    brls::Application::giveFocus(this->userInfo.getView());
+}
+
+void VideoComment::exitInternal() {
+    this->internal = false;
+    this->applyChildFocus(false);
+    brls::Application::giveFocus(this);
+}
+
+brls::View* VideoComment::lastPicture() {
+    if (!this->picturesBox || this->picturesBox->getVisibility() != brls::Visibility::VISIBLE) return nullptr;
+    auto& children = this->picturesBox->getChildren();
+    if (children.empty()) return nullptr;
+    return children.back();
+}
+
+void VideoComment::setPrevResolver(std::function<brls::View*()> resolver) {
+    this->prevResolver = std::move(resolver);
 }
 
 void VideoComment::setNextDownResolver(std::function<brls::View*()> resolver) {
@@ -394,11 +457,11 @@ void VideoComment::setActionDownResolver(std::function<brls::View*()> resolver) 
 }
 
 brls::View* VideoComment::getNextFocus(brls::FocusDirection direction, brls::View* currentView) {
-    if (direction == brls::FocusDirection::DOWN && this->downResolver) {
+    if (!this->internal && direction == brls::FocusDirection::DOWN && this->downResolver) {
         if (auto* next = this->downResolver()) return next;
     }
-    if (direction == brls::FocusDirection::DOWN && this->focusIntoActions) {
-        if (this->userInfo) return this->userInfo.getView();
+    if (!this->internal && direction == brls::FocusDirection::UP && this->prevResolver) {
+        if (auto* prev = this->prevResolver()) return prev;
     }
     return RecyclingGridItem::getNextFocus(direction, currentView);
 }
@@ -422,7 +485,7 @@ void VideoComment::buildPictures(const bilibili::VideoCommentResult& data) {
         const auto& picture = data.content.pictures[i];
 
         auto* holder = new NavBox();
-        holder->setFocusable(this->focusIntoActions);
+        holder->setFocusable(false);
         holder->setCornerRadius(8);
         holder->setPadding(3);
         holder->setMarginRight(8);
@@ -472,6 +535,8 @@ void VideoComment::buildPictures(const bilibili::VideoCommentResult& data) {
         if (i + 1 < holders.size()) holders[i]->setNextFocus(brls::FocusDirection::RIGHT, holders[i + 1]);
         if (i > 0) holders[i]->setNextFocus(brls::FocusDirection::LEFT, holders[i - 1]);
         holders[i]->setNextFocus(brls::FocusDirection::DOWN, this->likeBox);
+        holders[i]->setNextFocusResolver(brls::FocusDirection::UP,
+                                         [this]() -> brls::View* { return this->userInfo.getView(); });
     }
 }
 
