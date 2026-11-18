@@ -342,6 +342,7 @@
 
     "local_no_selection": "動画を選択してください",
 
+    "local_empty_period": "この期間の記録はありません",
     "fav_success": "お気に入りに追加しました",
 
     "fav_cancel": "お気に入りから削除しました",

@@ -48,6 +48,7 @@ private:
     BRLS_BIND(brls::Box, btnYesterday, "mine/history/yesterday");
     BRLS_BIND(brls::Box, btnOlder, "mine/history/older");
     BRLS_BIND(brls::Box, btnDone, "mine/history/done");
+    BRLS_BIND(brls::Label, deleteLabel, "mine/history/delete/label");
     BRLS_BIND(brls::Box, bottomBar, "mine/history/footer");
     BRLS_BIND(brls::Box, btnSelectAll, "mine/history/selectall");
     BRLS_BIND(brls::Box, btnDelete, "mine/history/delete");
@@ -57,8 +58,13 @@ private:
     void selectRange(int which);  // 0=今天 1=昨天 2=更早
     void deleteSelected();
     void refreshCheckedStates();
+    void onPeriodButton(int which);
+    void enterCardMode();
+    void exitCardMode();
+    void updateDeleteLabel();
     brls::View* firstRecordView();
-    bool editing = false;
+    bool editing  = false;
+    bool cardMode = false;
 
     // 键盘/手柄长按 Enter 检测
     std::chrono::steady_clock::time_point pressStart;

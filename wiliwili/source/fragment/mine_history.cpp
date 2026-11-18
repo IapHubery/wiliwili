@@ -180,10 +180,30 @@ public:
     }
 
     void selectAll() {
-        for (const auto& item : list) selected.insert(item.history.bvid);
+        for (const auto& item : list) {
+            if (!item.history.bvid.empty()) selected.insert(item.history.bvid);
+        }
     }
 
     void clearSelection() { selected.clear(); }
+
+    /// -1=全部 0=今天 1=昨天 2=更早
+    void setFilter(int which) {
+        this->filterPeriod = which;
+        this->sortAndBuild();
+    }
+
+    void setCardsFocusable(bool value) { this->cardFocus = value; }
+
+    size_t selectedCount() const { return selected.size(); }
+
+    size_t countPeriod(int which) const {
+        size_t count = 0;
+        for (const auto& item : list) {
+            if (!item.history.bvid.empty() && this->matchPeriod(item.view_at, which)) count++;
+        }
+        return count;
+    }
 
     bool isRowSelected(size_t row) const {
         if (row >= rows.size() || rows[row].blank) return false;
@@ -225,17 +245,7 @@ public:
         }
         if (targets.empty()) return;
 
-        bool allSelected = true;
-        for (const auto& bvid : targets) {
-            if (!selected.count(bvid)) {
-                allSelected = false;
-                break;
-            }
-        }
-        for (const auto& bvid : targets) {
-            if (allSelected) selected.erase(bvid);
-            else selected.insert(bvid);
-        }
+        for (const auto& bvid : targets) selected.insert(bvid);
     }
 
     RecyclingGridItem* cellForRow(RecyclingGrid* recycler, size_t index) override {
@@ -243,6 +253,7 @@ public:
         if (rows[index].blank) return recycler->dequeueReusableCell("Blank");
 
         auto* item = (SelectableHistoryCard*)recycler->dequeueReusableCell("Cell");
+        item->setFocusable(this->cardFocus);
 
         // 左右边缘再按方向键时，在「按钮区」和「记录区」之间切换
         item->leftTarget  = [this]() -> brls::View* { return this->leftButton; };
@@ -337,24 +348,39 @@ private:
         this->rows.clear();
         int column       = 0;
         std::string last;
+        size_t emitted = 0;
         for (size_t i = 0; i < this->list.size(); i++) {
+            if (this->filterPeriod >= 0 && !this->matchPeriod(this->list[i].view_at, this->filterPeriod)) continue;
             std::string day = localDayKey(this->list[i].view_at);
-            if (i > 0 && day != last && column != 0) {
+            if (emitted > 0 && day != last && column != 0) {
                 while (column != 0) {
                     this->rows.push_back({true, 0, false});
                     column = (column + 1) % HISTORY_GRID_SPAN;
                 }
             }
-            this->rows.push_back({false, i, i == 0 || day != last});
+            this->rows.push_back({false, i, emitted == 0 || day != last});
             column = (column + 1) % HISTORY_GRID_SPAN;
             last   = day;
+            emitted++;
         }
+    }
+
+    bool matchPeriod(int64_t viewAt, int which) const {
+        if (which < 0) return true;
+        std::string key       = localDayKey(viewAt);
+        std::string today     = localDayKey((int64_t)wiliwili::getUnixTime());
+        std::string yesterday = localDayKey((int64_t)wiliwili::getUnixTime() - 86400);
+        if (which == 0) return key == today;
+        if (which == 1) return key == yesterday;
+        return key != today && key != yesterday;
     }
 
     bilibili::HistoryVideoListResult list;
     std::vector<Row> rows;
     brls::View* leftButton  = nullptr;
     brls::View* rightButton = nullptr;
+    int filterPeriod        = -1;
+    bool cardFocus          = true;
 };
 
 MineHistory::MineHistory() {
@@ -375,8 +401,10 @@ MineHistory::MineHistory() {
         this->requestData(true);
     });
 
-    this->topBar->setVisibility(brls::Visibility::GONE);
+    this->topBar->setVisibility(ProgramConfig::instance().hasLoginInfo() ? brls::Visibility::GONE
+                                                                        : brls::Visibility::VISIBLE);
     this->bottomBar->setVisibility(brls::Visibility::GONE);
+    this->btnDone->setVisibility(brls::Visibility::GONE);
 
     if (!ProgramConfig::instance().hasLoginInfo()) {
         auto bind = [this](brls::Box* box, std::function<void()> action) {
@@ -387,26 +415,55 @@ MineHistory::MineHistory() {
             box->addGestureRecognizer(new brls::TapGestureRecognizer(box));
         };
 
-        bind(this->btnToday, [this]() { this->selectRange(0); });
-        bind(this->btnYesterday, [this]() { this->selectRange(1); });
-        bind(this->btnOlder, [this]() { this->selectRange(2); });
+        bind(this->btnToday, [this]() { this->onPeriodButton(0); });
+        bind(this->btnYesterday, [this]() { this->onPeriodButton(1); });
+        bind(this->btnOlder, [this]() { this->onPeriodButton(2); });
         bind(this->btnSelectAll, [this]() {
             if (auto* ds = this->getDataSource()) {
-                ds->toggleSelectAll();
+                ds->selectAll();
                 this->refreshCheckedStates();
+                this->updateDeleteLabel();
             }
         });
         bind(this->btnDelete, [this]() { this->deleteSelected(); });
         bind(this->btnDone, [this]() { this->setEditMode(false); });
 
-        // 按钮区左右边缘向外切换回记录区
+        // 按钮区上下边缘进入卡片勾选区
+        auto enterCards = [this]() -> brls::View* {
+            this->enterCardMode();
+            return this->firstRecordView();
+        };
         if (auto* nav = dynamic_cast<NavBox*>(this->btnToday.getView())) {
-            nav->setNextFocusResolver(brls::FocusDirection::LEFT, [this]() { return this->firstRecordView(); });
+            nav->setNextFocusResolver(brls::FocusDirection::DOWN, enterCards);
+        }
+        if (auto* nav = dynamic_cast<NavBox*>(this->btnYesterday.getView())) {
+            nav->setNextFocusResolver(brls::FocusDirection::DOWN, enterCards);
+        }
+        if (auto* nav = dynamic_cast<NavBox*>(this->btnOlder.getView())) {
+            nav->setNextFocusResolver(brls::FocusDirection::DOWN, enterCards);
+        }
+        if (auto* nav = dynamic_cast<NavBox*>(this->btnSelectAll.getView())) {
+            nav->setNextFocusResolver(brls::FocusDirection::UP, enterCards);
         }
         if (auto* nav = dynamic_cast<NavBox*>(this->btnDelete.getView())) {
-            nav->setNextFocusResolver(brls::FocusDirection::RIGHT, [this]() { return this->firstRecordView(); });
+            nav->setNextFocusResolver(brls::FocusDirection::UP, enterCards);
         }
     }
+
+    // Esc 逐级退出：卡片模式 → 按钮模式 → 浏览态
+    this->registerAction("", brls::ControllerButton::BUTTON_B,
+                         [this](brls::View*) -> bool {
+                             if (this->cardMode) {
+                                 this->exitCardMode();
+                                 return true;
+                             }
+                             if (this->editing) {
+                                 this->setEditMode(false);
+                                 return true;
+                             }
+                             return false;
+                         },
+                         true);
 
     this->requestData();
 }
@@ -477,15 +534,92 @@ DataSourceMineHistoryVideoList* MineHistory::getDataSource() {
 
 void MineHistory::setEditMode(bool value) {
     this->editing = value;
-    auto* ds      = this->getDataSource();
+    this->cardMode = false;
+    auto* ds       = this->getDataSource();
     if (ds) {
         ds->setSelecting(value);
         if (!value) ds->clearSelection();
+        ds->setCardsFocusable(!value);
     }
-    this->topBar->setVisibility(value ? brls::Visibility::VISIBLE : brls::Visibility::GONE);
+    // 同步已渲染卡片的可聚焦状态
+    if (ds) {
+        size_t count = ds->getItemCount();
+        for (size_t i = 0; i < count; i++) {
+            auto* item = this->recyclingGrid->getGridItemByIndex(i);
+            if (item) item->setFocusable(!value);
+        }
+    }
+
+    this->topBar->setVisibility(brls::Visibility::VISIBLE);
+    this->btnDone->setVisibility(value ? brls::Visibility::VISIBLE : brls::Visibility::GONE);
     this->bottomBar->setVisibility(value ? brls::Visibility::VISIBLE : brls::Visibility::GONE);
+
+    if (value) {
+        brls::Application::giveFocus(this->btnToday.getView());
+    } else {
+        if (auto* first = this->firstRecordView()) {
+            brls::Application::giveFocus(first);
+        } else {
+            brls::Application::giveFocus(this->recyclingGrid.getView());
+        }
+    }
+
     this->refreshCheckedStates();
+    this->updateDeleteLabel();
     if (this->onEditStateChanged) this->onEditStateChanged(value);
+}
+
+void MineHistory::enterCardMode() {
+    auto* ds = this->getDataSource();
+    if (!ds) return;
+    this->cardMode = true;
+    ds->setCardsFocusable(true);
+    size_t count = ds->getItemCount();
+    for (size_t i = 0; i < count; i++) {
+        auto* item = this->recyclingGrid->getGridItemByIndex(i);
+        if (item) item->setFocusable(true);
+    }
+}
+
+void MineHistory::exitCardMode() {
+    auto* ds = this->getDataSource();
+    this->cardMode = false;
+    if (ds) {
+        ds->setCardsFocusable(false);
+        size_t count = ds->getItemCount();
+        for (size_t i = 0; i < count; i++) {
+            auto* item = this->recyclingGrid->getGridItemByIndex(i);
+            if (item) item->setFocusable(false);
+        }
+    }
+    brls::Application::giveFocus(this->btnToday.getView());
+}
+
+void MineHistory::onPeriodButton(int which) {
+    auto* ds = this->getDataSource();
+    if (!ds) return;
+    if (!this->editing) {
+        ds->setFilter(which);
+        this->recyclingGrid->reloadData();
+        return;
+    }
+    if (ds->countPeriod(which) == 0) {
+        ToastHelper::show("wiliwili/mine/local_empty_period"_i18n);
+        return;
+    }
+    ds->selectRange(which);
+    this->refreshCheckedStates();
+    this->updateDeleteLabel();
+}
+
+void MineHistory::updateDeleteLabel() {
+    auto* ds = this->getDataSource();
+    size_t count = ds ? ds->getSelected().size() : 0;
+    this->deleteLabel->setText(fmt::format("{} ({})", "wiliwili/mine/local_delete"_i18n, count));
+    this->deleteLabel->setTextColor(
+        count > 0 ? brls::Application::getTheme().getColor("brls/text")
+                  : brls::Application::getTheme().getColor("font/grey"));
+    this->btnDelete->setAlpha(count > 0 ? 1.0f : 0.45f);
 }
 
 bool MineHistory::hasData() {
@@ -548,10 +682,15 @@ void MineHistory::onHistoryList(const bilibili::HistoryVideoResultWrapper& resul
             recyclingGrid->setDataSource(new DataSourceMineHistoryVideoList(
                 result.list, this->btnToday.getView(), this->btnDelete.getView()));
             auto* ds = dynamic_cast<DataSourceMineHistoryVideoList*>(recyclingGrid->getDataSource());
-            if (this->editing && ds) ds->setSelecting(true);
-            this->topBar->setVisibility(this->editing ? brls::Visibility::VISIBLE : brls::Visibility::GONE);
+            if (this->editing && ds) {
+                ds->setSelecting(true);
+                ds->setCardsFocusable(this->cardMode);
+            }
+            this->topBar->setVisibility(brls::Visibility::VISIBLE);
+            this->btnDone->setVisibility(this->editing ? brls::Visibility::VISIBLE : brls::Visibility::GONE);
             this->bottomBar->setVisibility(this->editing ? brls::Visibility::VISIBLE : brls::Visibility::GONE);
             this->refreshCheckedStates();
+            this->updateDeleteLabel();
             if (this->onHistoryDataChanged) this->onHistoryDataChanged(!result.list.empty());
         }
     });

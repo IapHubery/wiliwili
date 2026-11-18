@@ -342,6 +342,7 @@
 
     "local_no_selection": "Please select videos first",
 
+    "local_empty_period": "No records for this period",
     "fav_success": "Added to favorites",
 
     "fav_cancel": "Removed from favorites",

@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <functional>
 #include <nanovg.h>
 #include <borealis/core/box.hpp>
 #include <borealis/core/bind.hpp>
@@ -49,7 +50,12 @@ public:
 
     brls::View* getNextFocus(brls::FocusDirection direction, brls::View* currentView) override;
 
+    void setNextFocusOverride(std::function<brls::View*(brls::FocusDirection)> cb) {
+        this->nextFocusOverride = std::move(cb);
+    }
+
     NVGcolor hintBackground = {};
+    std::function<brls::View*(brls::FocusDirection)> nextFocusOverride = nullptr;
 
 private:
     BRLS_BIND(brls::Image, avatarView, "userinfo/avatar");

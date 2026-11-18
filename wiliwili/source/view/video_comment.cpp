@@ -358,7 +358,21 @@ void VideoComment::setFocusIntoActions(bool value) {
         if (box) box->setFocusable(value);
     }
     // 头像/昵称区域也只在详情页可聚焦，避免列表上下移动时误入卡片内部
-    if (this->userInfo) this->userInfo->setFocusable(value);
+    if (this->userInfo) {
+        this->userInfo->setFocusable(value);
+        if (value) {
+            this->userInfo->setNextFocusOverride([this](brls::FocusDirection direction) -> brls::View* {
+                if (direction != brls::FocusDirection::DOWN) return nullptr;
+                if (this->picturesBox && this->picturesBox->getVisibility() == brls::Visibility::VISIBLE &&
+                    !this->picturesBox->getChildren().empty()) {
+                    return this->picturesBox->getChildren().front();
+                }
+                return this->likeBox.getView();
+            });
+        } else {
+            this->userInfo->setNextFocusOverride(nullptr);
+        }
+    }
     if (this->picturesBox) {
         for (auto* child : this->picturesBox->getChildren()) {
             child->setFocusable(value);
@@ -381,11 +395,7 @@ void VideoComment::setActionDownResolver(std::function<brls::View*()> resolver) 
 
 brls::View* VideoComment::getNextFocus(brls::FocusDirection direction, brls::View* currentView) {
     if (direction == brls::FocusDirection::DOWN && this->focusIntoActions) {
-        if (this->picturesBox && this->picturesBox->getVisibility() == brls::Visibility::VISIBLE &&
-            !this->picturesBox->getChildren().empty()) {
-            return this->picturesBox->getChildren().front();
-        }
-        if (this->likeBox) return this->likeBox.getView();
+        if (this->userInfo) return this->userInfo.getView();
     }
     if (direction == brls::FocusDirection::DOWN && this->downResolver) {
         if (auto* next = this->downResolver()) return next;

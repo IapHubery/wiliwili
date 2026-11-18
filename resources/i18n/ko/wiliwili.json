@@ -342,6 +342,7 @@
 
     "local_no_selection": "먼저 동영상을 선택하세요",
 
+    "local_empty_period": "이 기간에는 기록이 없습니다",
     "fav_success": "즐겨찾기에 추가했습니다",
 
     "fav_cancel": "즐겨찾기에서 제거했습니다",

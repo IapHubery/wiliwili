@@ -342,6 +342,7 @@
 
     "local_no_selection": "請先選擇影片",
 
+    "local_empty_period": "該時段暫無記錄",
     "fav_success": "收藏成功",
 
     "fav_cancel": "已取消收藏",

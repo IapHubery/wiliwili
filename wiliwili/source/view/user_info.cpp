@@ -55,6 +55,9 @@ brls::Label* UserInfoView::getLabelMisc() { return this->labeMisc; }
 brls::Box* UserInfoView::getHintBox() { return this->boxHint; }
 
 brls::View* UserInfoView::getNextFocus(brls::FocusDirection direction, brls::View* currentView) {
+    if (this->nextFocusOverride) {
+        if (auto* view = this->nextFocusOverride(direction)) return view;
+    }
     if (direction == brls::FocusDirection::RIGHT && this->boxHint->getVisibility() == brls::Visibility::VISIBLE) {
         return this->boxHint;
     }
