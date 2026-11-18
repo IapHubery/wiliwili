@@ -124,6 +124,7 @@
                 alignItems="center"
                 focusable="true">
             <brls:Label
+                    id="mine/history/delete/label"
                     text="@i18n/wiliwili/mine/local_delete"
                     fontSize="18"
                     textColor="#FFFFFF"/>

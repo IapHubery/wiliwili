@@ -394,11 +394,11 @@ void VideoComment::setActionDownResolver(std::function<brls::View*()> resolver) 
 }
 
 brls::View* VideoComment::getNextFocus(brls::FocusDirection direction, brls::View* currentView) {
-    if (direction == brls::FocusDirection::DOWN && this->focusIntoActions) {
-        if (this->userInfo) return this->userInfo.getView();
-    }
     if (direction == brls::FocusDirection::DOWN && this->downResolver) {
         if (auto* next = this->downResolver()) return next;
+    }
+    if (direction == brls::FocusDirection::DOWN && this->focusIntoActions) {
+        if (this->userInfo) return this->userInfo.getView();
     }
     return RecyclingGridItem::getNextFocus(direction, currentView);
 }

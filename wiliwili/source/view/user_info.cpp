@@ -19,7 +19,8 @@ UserInfoView::UserInfoView() {
     this->boxHint->setFocusable(true);
     this->boxHint->getFocusEvent()->subscribe([this](bool focused) {
         this->boxHint->setBackgroundColor(focused ? nvgRGBA(0, 161, 214, 235) : this->hintBackground);
-        this->labeHint->setTextColor(focused ? nvgRGB(255, 255, 255) : this->hintTextColor);
+        this->labeHint->setTextColor(
+            focused ? brls::Application::getTheme().getColor("brls/text") : this->hintTextColor);
     });
 }
 
