@@ -503,7 +503,8 @@ void MineHistory::onCreate() {
                                 if (!this->longFired &&
                                     now - this->pressStart >= std::chrono::milliseconds(600)) {
                                     this->longFired = true;
-                                    this->setEditMode(!this->editing);
+                                    bool next = !this->editing;
+                                    brls::sync([this, next]() { this->setEditMode(next); });
                                     return true;
                                 }
                                 return true;
@@ -554,15 +555,17 @@ void MineHistory::setEditMode(bool value) {
     this->btnDone->setVisibility(value ? brls::Visibility::VISIBLE : brls::Visibility::GONE);
     this->bottomBar->setVisibility(value ? brls::Visibility::VISIBLE : brls::Visibility::GONE);
 
+    brls::View* target = nullptr;
     if (value) {
-        brls::Application::giveFocus(this->btnToday.getView());
+        target = this->btnToday.getView();
+    } else if (auto* first = this->firstRecordView()) {
+        target = first;
     } else {
-        if (auto* first = this->firstRecordView()) {
-            brls::Application::giveFocus(first);
-        } else {
-            brls::Application::giveFocus(this->recyclingGrid.getView());
-        }
+        target = this->recyclingGrid.getView();
     }
+    brls::sync([target]() {
+        if (target) brls::Application::giveFocus(target);
+    });
 
     this->refreshCheckedStates();
     this->updateDeleteLabel();
@@ -592,7 +595,10 @@ void MineHistory::exitCardMode() {
             if (item) item->setFocusable(false);
         }
     }
-    brls::Application::giveFocus(this->btnToday.getView());
+    brls::View* target = this->btnToday.getView();
+    brls::sync([target]() {
+        if (target) brls::Application::giveFocus(target);
+    });
 }
 
 void MineHistory::onPeriodButton(int which) {

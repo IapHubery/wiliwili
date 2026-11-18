@@ -18,7 +18,8 @@ UserInfoView::UserInfoView() {
     // 关注按钮支持键盘 / 手柄聚焦，聚焦时高亮
     this->boxHint->setFocusable(true);
     this->boxHint->getFocusEvent()->subscribe([this](bool focused) {
-        this->boxHint->setBackgroundColor(focused ? nvgRGBA(0, 161, 214, 70) : nvgRGBA(0, 0, 0, 0));
+        this->boxHint->setBackgroundColor(focused ? nvgRGBA(0, 161, 214, 235) : this->hintBackground);
+        this->labeHint->setTextColor(focused ? nvgRGB(255, 255, 255) : this->hintTextColor);
     });
 }
 
@@ -79,42 +80,48 @@ void UserInfoView::setHintType(InfoHintType type) {
             this->boxHint->setBackgroundColor(this->hintBackground);
             this->svgHint->setImageFromSVGRes("svg/bpx-svg-sprite-sort.svg");
             this->labeHint->setText("已关注");
-            this->labeHint->setTextColor(theme.getColor("font/grey"));
+            this->hintTextColor = theme.getColor("font/grey");
+            this->labeHint->setTextColor(this->hintTextColor);
             break;
         case InfoHintType::UP_NOT_FOLLOWED:
             this->hintBackground = theme.getColor("color/bilibili");
             this->boxHint->setBackgroundColor(this->hintBackground);
             this->svgHint->setImageFromSVGRes("svg/bpx-svg-sprite-add.svg");
             this->labeHint->setText("关注");
-            this->labeHint->setTextColor(theme.getColor("color/white"));
+            this->hintTextColor = theme.getColor("color/white");
+            this->labeHint->setTextColor(this->hintTextColor);
             break;
         case InfoHintType::BANGUMI_FOLLOWING:
             this->hintBackground = theme.getColor("color/grey_1");
             this->boxHint->setBackgroundColor(this->hintBackground);
             this->svgHint->setImageFromSVGRes("svg/bpx-svg-sprite-sort.svg");
             this->labeHint->setText("已追番");
-            this->labeHint->setTextColor(theme.getColor("font/grey"));
+            this->hintTextColor = theme.getColor("font/grey");
+            this->labeHint->setTextColor(this->hintTextColor);
             break;
         case InfoHintType::BANGUMI_NOT_FOLLOWED:
             this->hintBackground = theme.getColor("color/bilibili");
             this->boxHint->setBackgroundColor(this->hintBackground);
             this->svgHint->setImageFromSVGRes("svg/bpx-svg-sprite-add.svg");
             this->labeHint->setText("追番");
-            this->labeHint->setTextColor(theme.getColor("color/white"));
+            this->hintTextColor = theme.getColor("color/white");
+            this->labeHint->setTextColor(this->hintTextColor);
             break;
         case InfoHintType::CINEMA_FOLLOWING:
             this->hintBackground = theme.getColor("color/grey_1");
             this->boxHint->setBackgroundColor(this->hintBackground);
             this->svgHint->setImageFromSVGRes("svg/bpx-svg-sprite-sort.svg");
             this->labeHint->setText("已追剧");
-            this->labeHint->setTextColor(theme.getColor("font/grey"));
+            this->hintTextColor = theme.getColor("font/grey");
+            this->labeHint->setTextColor(this->hintTextColor);
             break;
         case InfoHintType::CINEMA_NOT_FOLLOWED:
             this->hintBackground = theme.getColor("color/bilibili");
             this->boxHint->setBackgroundColor(this->hintBackground);
             this->svgHint->setImageFromSVGRes("svg/bpx-svg-sprite-add.svg");
             this->labeHint->setText("追剧");
-            this->labeHint->setTextColor(theme.getColor("color/white"));
+            this->hintTextColor = theme.getColor("color/white");
+            this->labeHint->setTextColor(this->hintTextColor);
             break;
 
         default:
