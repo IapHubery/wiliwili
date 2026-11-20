@@ -308,23 +308,44 @@ void VideoDetail::requestSeasonVideoUrl(const std::string& bvid, uint64_t cid, b
 
     ASYNC_RETAIN
     brls::Logger::debug("请求番剧视频播放地址: {}", cid);
-    BILI::get_season_url(
-        cid, defaultQuality,
-        [ASYNC_TOKEN](const bilibili::SeasonUrlResult& result) {
-            brls::sync([ASYNC_TOKEN, result]() {
-                ASYNC_RELEASE
-                brls::Logger::debug("BILI::get_video_url");
-                this->videoUrlResult = result.video_info;
-                this->onVideoPlayUrl(this->videoUrlResult);
+    if (!ProgramConfig::instance().hasLoginInfo() && !bvid.empty()) {
+        // 未登录时 PGC 接口会限制到 480P；改用普通视频播放接口（带 try_look）
+        // 可以拿到包含 1080P 的 DASH 流。
+        BILI::get_video_url(
+            bvid, cid, defaultQuality,
+            [ASYNC_TOKEN](const bilibili::VideoUrlResult& result) {
+                brls::sync([ASYNC_TOKEN, result]() {
+                    ASYNC_RELEASE
+                    this->videoUrlResult = result;
+                    this->onVideoPlayUrl(this->videoUrlResult);
+                });
+            },
+            [ASYNC_TOKEN](BILI_ERR) {
+                brls::Logger::error("{}", error);
+                brls::sync([ASYNC_TOKEN, error]() {
+                    ASYNC_RELEASE
+                    this->onError("请求视频地址失败\n" + error);
+                });
             });
-        },
-        [ASYNC_TOKEN](BILI_ERR) {
-            brls::Logger::error("{}", error);
-            brls::sync([ASYNC_TOKEN, error]() {
-                ASYNC_RELEASE
-                this->onError("请求视频地址失败\n" + error);
+    } else {
+        BILI::get_season_url(
+            cid, defaultQuality,
+            [ASYNC_TOKEN](const bilibili::SeasonUrlResult& result) {
+                brls::sync([ASYNC_TOKEN, result]() {
+                    ASYNC_RELEASE
+                    brls::Logger::debug("BILI::get_video_url");
+                    this->videoUrlResult = result.video_info;
+                    this->onVideoPlayUrl(this->videoUrlResult);
+                });
+            },
+            [ASYNC_TOKEN](BILI_ERR) {
+                brls::Logger::error("{}", error);
+                brls::sync([ASYNC_TOKEN, error]() {
+                    ASYNC_RELEASE
+                    this->onError("请求视频地址失败\n" + error);
+                });
             });
-        });
+    }
 
     // 请求当前视频在线人数
     this->requestVideoOnline(bvid, cid);
