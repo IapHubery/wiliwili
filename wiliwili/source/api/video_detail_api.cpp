@@ -222,21 +222,23 @@ void BilibiliClient::get_season_status(uint64_t seasonID, const std::function<vo
 
 void BilibiliClient::get_season_url(uint64_t cid, int qn, const std::function<void(SeasonUrlResult)>& callback,
                                     const ErrorCallback& error) {
-    HTTP::getResultAsync<SeasonUrlResult>(
-            Api::SeasonUrl2,
-            {{"cid",           std::to_string(cid)},
-             {"qn",            std::to_string(qn)},
-             {"gaia_source",   ""},
-             {"from_client",   "PC_APP"},
-             {"is_main_page",  "false"},
-             {"need_fragment", "false"},
-             {"isGaiaAvoided", "false"},
-             {"voice_balance", "1"},
-             {"drm_tech_type", "3"},
-             {"fourk",         "1"},
-             {"fnval",         FNVAL},
-             {"fnver",         "0"}},
-            callback, error);
+    cpr::Parameters parameters = {{"cid", std::to_string(cid)},
+                                  {"qn", std::to_string(qn)},
+                                  {"gaia_source", ""},
+                                  {"from_client", "PC_APP"},
+                                  {"is_main_page", "false"},
+                                  {"need_fragment", "false"},
+                                  {"isGaiaAvoided", "false"},
+                                  {"voice_balance", "1"},
+                                  {"drm_tech_type", "3"},
+                                  {"fourk", "1"},
+                                  {"fnval", FNVAL},
+                                  {"fnver", "0"}};
+    // 免登录观看 1080P：与 UGC 播放接口保持一致，附加 try_look
+    if (!ProgramConfig::instance().hasLoginInfo()) {
+        parameters.Add({"try_look", "1"});
+    }
+    HTTP::getResultAsync<SeasonUrlResult>(Api::SeasonUrl2, parameters, callback, error);
 }
 
 void BilibiliClient::get_live_url(int roomid, int qn, const std::function<void(LiveUrlResultWrapper)>& callback,

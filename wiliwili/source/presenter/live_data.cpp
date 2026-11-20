@@ -2,6 +2,7 @@
 // Created by fang on 2023/11/14.
 //
 
+#include <algorithm>
 #include <borealis/core/thread.hpp>
 #include <borealis/core/logger.hpp>
 
@@ -40,6 +41,21 @@ void LiveDataRequest::requestData(int roomid) {
                 liveUrl = i;
                 break;
             }
+
+            // 直播清晰度补充蓝光 / 超清（部分房间接口不会主动返回这两档）
+            auto addQuality = [this](int qn, const std::string& desc) {
+                if (this->qualityDescriptionMap.count(qn) == 0) {
+                    this->qualityDescriptionMap[qn] = desc;
+                }
+                if (std::find(this->liveUrl.accept_qn.begin(), this->liveUrl.accept_qn.end(), qn) ==
+                    this->liveUrl.accept_qn.end()) {
+                    this->liveUrl.accept_qn.push_back(qn);
+                }
+            };
+            addQuality(400, "蓝光");
+            addQuality(250, "超清");
+            std::sort(this->liveUrl.accept_qn.begin(), this->liveUrl.accept_qn.end(),
+                      [](int a, int b) { return a > b; });
             brls::sync([ASYNC_TOKEN]() {
                 ASYNC_RELEASE
                 onLiveData(liveRoomPlayInfo);
