@@ -857,5 +857,4 @@ void VideoDetail::followSeason(uint64_t season, bool follow) {
                 this->onSeasonStatus(this->seasonStatus);
             });
         });
-    return;
 }
