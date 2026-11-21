@@ -943,6 +943,19 @@ void BasePlayerActivity::onError(const std::string& error) {
     } else if (pystring::count(error, "62002") > 0) {
         msg = "稿件不可见";
     }
+
+    // 大会员/付费/充电等限制：在播放区域显示状态，不弹窗，保证评论区可用
+    bool inlineStatus = !forceClose || msg.find("大会员") != std::string::npos ||
+                        msg.find("付费") != std::string::npos || msg.find("充电") != std::string::npos ||
+                        msg.find("预览") != std::string::npos;
+    if (inlineStatus) {
+        this->video->showOSD(false);
+        this->video->setCenterHintText(msg);
+        this->video->showCenterHint();
+        ToastHelper::show(msg);
+        return;
+    }
+
     auto dialog = new brls::Dialog(msg);
     dialog->setCancelable(false);
     dialog->addButton("hints/ok"_i18n, [forceClose]() {

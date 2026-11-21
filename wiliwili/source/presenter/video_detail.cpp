@@ -317,8 +317,8 @@ void VideoDetail::requestSeasonVideoUrl(const std::string& bvid, uint64_t cid, b
             [ASYNC_TOKEN](const bilibili::SeasonUrlResult& result) {
                 brls::sync([ASYNC_TOKEN, result]() {
                     ASYNC_RELEASE
-                    if (result.video_info.accept_quality.empty()) {
-                        this->onError("请求视频地址失败\n该视频需要大会员或付费观看");
+                    if (result.video_info.accept_quality.empty() || result.video_info.dash.video.empty()) {
+                        this->onError("该视频需要大会员或付费观看");
                         return;
                     }
                     this->videoUrlResult = result.video_info;
