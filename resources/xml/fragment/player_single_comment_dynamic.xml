@@ -4,7 +4,7 @@
         justifyContent="center"
         id="player/cancel"
         hideClickAnimation="true"
-        backgroundColor="@theme/brls/backdrop">
+        backgroundColor="#00000000">
 
     <brls:Box
             id="box/background"

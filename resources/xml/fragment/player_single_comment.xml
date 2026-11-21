@@ -2,7 +2,7 @@
         width="auto"
         height="auto"
         justifyContent="flexEnd"
-        backgroundColor="@theme/brls/backdrop">
+        backgroundColor="#00000000">
 
     <brls:Box
             id="player/cancel"
