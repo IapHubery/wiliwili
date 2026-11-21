@@ -268,6 +268,18 @@ void BilibiliClient::get_ogv_url(uint64_t ep_id, uint64_t season_id, uint64_t ci
                                   {"dm_img_inter", "{\"ds\":[],\"wh\":[0,0,0],\"of\":[0,0,0]}"}};
     if (!ProgramConfig::instance().hasLoginInfo()) {
         parameters.Add({"try_look", "1"});
+        // ogv 接口需要 buvid3，否则返回 -400
+        bool hasBuvid = false;
+        for (const auto& cookie : HTTP::COOKIES) {
+            if (cookie.GetName() == "buvid3" && !cookie.GetValue().empty()) {
+                hasBuvid = true;
+                break;
+            }
+        }
+        if (!hasBuvid) {
+            HTTP::COOKIES.emplace_back({"buvid3", BilibiliClient::genRandomBuvid3()});
+            HTTP::HEADERS["cookie"] = HTTP::getEncodedCookie(HTTP::COOKIES);
+        }
     }
     HTTP::getResultWithWbiAsync<SeasonUrlResult>(Api::OgvUrl, parameters, callback, error);
 }

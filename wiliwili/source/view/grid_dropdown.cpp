@@ -97,6 +97,8 @@ BaseDropdown::BaseDropdown(const std::string& title, ValueSelectedEvent::Callbac
     : cb(std::move(cb)), selected(selected) {
     this->inflateFromXMLRes("xml/views/grid_dropdown.xml");
     this->title->setText(title);
+    // 播放器内切换清晰度/音量时，不让下拉背景遮罩整个视频画面
+    this->applet->setBackgroundColor(nvgRGBA(0, 0, 0, 0));
 
     this->cancel->registerClickAction([this](...) {
         this->applet->dismiss();
