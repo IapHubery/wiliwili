@@ -337,6 +337,11 @@ public:
     static void get_season_url(uint64_t cid, int qn = 64, const std::function<void(SeasonUrlResult)>& callback = nullptr,
                                const ErrorCallback& error = nullptr);
 
+    /// get ogv (番剧/影视) video url by ep/season id, 支持未登录 1080P
+    static void get_ogv_url(uint64_t ep_id, uint64_t season_id, uint64_t cid, int qn = 64,
+                            const std::function<void(SeasonUrlResult)>& callback = nullptr,
+                            const ErrorCallback& error = nullptr);
+
     /// get live video url by roomid
     /// @deprecated 部分直播间无法获取到直播地址
     static void get_live_url(int roomid, int qn = 10000,

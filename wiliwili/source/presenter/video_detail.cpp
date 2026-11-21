@@ -308,7 +308,31 @@ void VideoDetail::requestSeasonVideoUrl(const std::string& bvid, uint64_t cid, b
 
     ASYNC_RETAIN
     brls::Logger::debug("请求番剧视频播放地址: {}", cid);
-    if (!ProgramConfig::instance().hasLoginInfo() && !bvid.empty()) {
+    if (!ProgramConfig::instance().hasLoginInfo() && this->episodeResult.id > 0 &&
+        this->seasonInfo.season_id > 0) {
+        // 参考 PiliPlus：未登录优先走 ogv playview（WBI + try_look），
+        // 部分番剧/影视用普通 UGC 接口会返回 -404，而该接口可以正常拿到 1080P DASH。
+        BILI::get_ogv_url(
+            this->episodeResult.id, this->seasonInfo.season_id, cid, defaultQuality,
+            [ASYNC_TOKEN](const bilibili::SeasonUrlResult& result) {
+                brls::sync([ASYNC_TOKEN, result]() {
+                    ASYNC_RELEASE
+                    if (result.video_info.accept_quality.empty()) {
+                        this->onError("请求视频地址失败\n该视频需要大会员或付费观看");
+                        return;
+                    }
+                    this->videoUrlResult = result.video_info;
+                    this->onVideoPlayUrl(this->videoUrlResult);
+                });
+            },
+            [ASYNC_TOKEN](BILI_ERR) {
+                brls::Logger::error("{}", error);
+                brls::sync([ASYNC_TOKEN, error]() {
+                    ASYNC_RELEASE
+                    this->onError("请求视频地址失败\n" + error);
+                });
+            });
+    } else if (!ProgramConfig::instance().hasLoginInfo() && !bvid.empty()) {
         // 未登录时 PGC 接口会限制到 480P；改用普通视频播放接口（带 try_look）
         // 可以拿到包含 1080P 的 DASH 流。
         BILI::get_video_url(

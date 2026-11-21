@@ -48,6 +48,7 @@ const std::string PlayUrlCast = _apiBase + "/x/tv/playurl";
 /// 番剧播放地址
 const std::string SeasonUrl = _apiBase + "/pgc/player/web/playurl";
 const std::string SeasonUrl2 = _apiBase + "/pgc/player/web/v2/playurl";
+const std::string OgvUrl = _apiBase + "/ogv/player/playview";
 /// 视频分P列表.
 const std::string PlayPageList = _apiBase + "/x/player/pagelist";
 /// 视频播放信息.

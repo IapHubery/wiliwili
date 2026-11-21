@@ -241,6 +241,37 @@ void BilibiliClient::get_season_url(uint64_t cid, int qn, const std::function<vo
     HTTP::getResultAsync<SeasonUrlResult>(Api::SeasonUrl2, parameters, callback, error);
 }
 
+void BilibiliClient::get_ogv_url(uint64_t ep_id, uint64_t season_id, uint64_t cid, int qn,
+                                 const std::function<void(SeasonUrlResult)>& callback,
+                                 const ErrorCallback& error) {
+    // 参考 PiliPlus：/ogv/player/playview 需要 WBI 签名，并带 biz_type=ogv。
+    // 未登录时附加 try_look=1 可拿到 1080P DASH。
+    cpr::Parameters parameters = {{"ep_id", std::to_string(ep_id)},
+                                  {"season_id", std::to_string(season_id)},
+                                  {"cid", std::to_string(cid)},
+                                  {"qn", std::to_string(qn)},
+                                  {"fnval", "4048"},
+                                  {"fnver", "0"},
+                                  {"fourk", "1"},
+                                  {"voice_balance", "0"},
+                                  {"gaia_source", "pre-load"},
+                                  {"isGaiaAvoided", "true"},
+                                  {"web_location", "1315873"},
+                                  {"biz_type", "ogv"},
+                                  {"scene", "normal"},
+                                  {"from_client", "BROWSER"},
+                                  {"drm_tech_type", "0"},
+                                  {"app_id", "100"},
+                                  {"dm_img_list", "[]"},
+                                  {"dm_img_str", ""},
+                                  {"dm_cover_img_str", ""},
+                                  {"dm_img_inter", "{\"ds\":[],\"wh\":[0,0,0],\"of\":[0,0,0]}"}};
+    if (!ProgramConfig::instance().hasLoginInfo()) {
+        parameters.Add({"try_look", "1"});
+    }
+    HTTP::getResultWithWbiAsync<SeasonUrlResult>(Api::OgvUrl, parameters, callback, error);
+}
+
 void BilibiliClient::get_live_url(int roomid, int qn, const std::function<void(LiveUrlResultWrapper)>& callback,
                                   const ErrorCallback& error) {
     HTTP::getResultAsync<LiveUrlResultWrapper>(
