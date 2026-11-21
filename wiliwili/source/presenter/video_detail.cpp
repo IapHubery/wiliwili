@@ -308,62 +308,86 @@ void VideoDetail::requestSeasonVideoUrl(const std::string& bvid, uint64_t cid, b
 
     ASYNC_RETAIN
     brls::Logger::debug("请求番剧视频播放地址: {}", cid);
-    if (!ProgramConfig::instance().hasLoginInfo() && this->episodeResult.id > 0 &&
-        this->seasonInfo.season_id > 0) {
-        // 参考 PiliPlus：未登录优先走 ogv playview（WBI + try_look），
-        // 部分番剧/影视用普通 UGC 接口会返回 -404，而该接口可以正常拿到 1080P DASH。
-        BILI::get_ogv_url(
-            this->episodeResult.id, this->seasonInfo.season_id, cid, defaultQuality,
-            [ASYNC_TOKEN](const bilibili::SeasonUrlResult& result) {
-                brls::sync([ASYNC_TOKEN, result]() {
-                    ASYNC_RELEASE
-                    if (result.video_info.accept_quality.empty() || result.video_info.dash.video.empty()) {
-                        this->onError("该视频需要大会员或付费观看");
-                        return;
-                    }
-                    this->videoUrlResult = result.video_info;
-                    this->onVideoPlayUrl(this->videoUrlResult);
+    if (!ProgramConfig::instance().hasLoginInfo()) {
+        // ====== 未登录播放回退链 ======
+        // 实测：免登录时 ogv playview 对普通用户只返回 480P 及以下的试看流；
+        // 而普通视频接口 /x/player/playurl 携带 try_look=1 时，对普通用户可播放的
+        // 内容（普通视频/限免/预告/试看分集）可以拿到 1080P DASH。
+        // 因此优先走 UGC 接口拿 1080P，失败（会员/付费分集返回 -404）时依次回退：
+        //   ogv playview（WBI + try_look 试看）→ PGC 接口兜底。
+        auto requestSeasonUrl = [ASYNC_TOKEN, cid]() {
+            BILI::get_season_url(
+                cid, defaultQuality,
+                [ASYNC_TOKEN](const bilibili::SeasonUrlResult& result) {
+                    brls::sync([ASYNC_TOKEN, result]() {
+                        ASYNC_RELEASE
+                        this->videoUrlResult = result.video_info;
+                        this->onVideoPlayUrl(this->videoUrlResult);
+                    });
+                },
+                [ASYNC_TOKEN](BILI_ERR) {
+                    brls::sync([ASYNC_TOKEN, error]() {
+                        ASYNC_RELEASE
+                        this->onError("请求视频地址失败\n" + error);
+                    });
                 });
-            },
-            [ASYNC_TOKEN](BILI_ERR) {
-                brls::Logger::error("{}", error);
-                brls::sync([ASYNC_TOKEN, error]() {
-                    ASYNC_RELEASE
-                    this->onError("请求视频地址失败\n" + error);
+        };
+        auto requestOgvUrl = [ASYNC_TOKEN, cid, requestSeasonUrl]() {
+            if (this->episodeResult.id == 0 || this->seasonInfo.season_id == 0) {
+                requestSeasonUrl();
+                return;
+            }
+            // 参考 PiliPlus：ogv playview 需要 WBI 签名与 buvid3，未登录时附加
+            // try_look=1 可拿到会员/付费分集的试看流（480P）。
+            BILI::get_ogv_url(
+                this->episodeResult.id, this->seasonInfo.season_id, cid, defaultQuality,
+                [ASYNC_TOKEN](const bilibili::SeasonUrlResult& result) {
+                    brls::sync([ASYNC_TOKEN, result]() {
+                        ASYNC_RELEASE
+                        if (result.video_info.accept_quality.empty() ||
+                            (result.video_info.dash.video.empty() && result.video_info.durl.empty())) {
+                            this->onError("该视频需要大会员或付费观看");
+                            return;
+                        }
+                        this->videoUrlResult = result.video_info;
+                        this->onVideoPlayUrl(this->videoUrlResult);
+                    });
+                },
+                [ASYNC_TOKEN, requestSeasonUrl](BILI_ERR) {
+                    brls::Logger::warning("ogv playview failed: {}, fallback to season url", error);
+                    requestSeasonUrl();
                 });
-            });
-    } else if (!ProgramConfig::instance().hasLoginInfo() && !bvid.empty()) {
-        // 未登录时 PGC 接口会限制到 480P；改用普通视频播放接口（带 try_look）
-        // 可以拿到包含 1080P 的 DASH 流。
-        BILI::get_video_url(
-            bvid, cid, defaultQuality,
-            [ASYNC_TOKEN](const bilibili::VideoUrlResult& result) {
-                brls::sync([ASYNC_TOKEN, result]() {
-                    ASYNC_RELEASE
-                    this->videoUrlResult = result;
-                    this->onVideoPlayUrl(this->videoUrlResult);
+        };
+        if (!bvid.empty()) {
+            // 未登录时 PGC 接口会限制到 480P；改用普通视频播放接口（带 try_look）
+            // 可以拿到包含 1080P 的 DASH 流。
+            BILI::get_video_url(
+                bvid, cid, defaultQuality,
+                [ASYNC_TOKEN](const bilibili::VideoUrlResult& result) {
+                    brls::sync([ASYNC_TOKEN, result]() {
+                        ASYNC_RELEASE
+                        this->videoUrlResult = result;
+                        this->onVideoPlayUrl(this->videoUrlResult);
+                    });
+                },
+                [ASYNC_TOKEN, requestOgvUrl](BILI_ERR) {
+                    brls::Logger::warning("guest ugc playurl failed: {}, fallback to ogv playview", error);
+                    requestOgvUrl();
                 });
-            },
-            [ASYNC_TOKEN](BILI_ERR) {
-                brls::Logger::error("{}", error);
-                brls::sync([ASYNC_TOKEN, error]() {
-                    ASYNC_RELEASE
-                    this->onError("请求视频地址失败\n" + error);
-                });
-            });
+        } else {
+            requestOgvUrl();
+        }
     } else {
         BILI::get_season_url(
             cid, defaultQuality,
             [ASYNC_TOKEN](const bilibili::SeasonUrlResult& result) {
                 brls::sync([ASYNC_TOKEN, result]() {
                     ASYNC_RELEASE
-                    brls::Logger::debug("BILI::get_video_url");
                     this->videoUrlResult = result.video_info;
                     this->onVideoPlayUrl(this->videoUrlResult);
                 });
             },
             [ASYNC_TOKEN](BILI_ERR) {
-                brls::Logger::error("{}", error);
                 brls::sync([ASYNC_TOKEN, error]() {
                     ASYNC_RELEASE
                     this->onError("请求视频地址失败\n" + error);
@@ -833,4 +857,5 @@ void VideoDetail::followSeason(uint64_t season, bool follow) {
                 this->onSeasonStatus(this->seasonStatus);
             });
         });
+    return;
 }
