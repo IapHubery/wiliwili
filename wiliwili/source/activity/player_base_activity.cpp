@@ -25,11 +25,11 @@
 #include "view/video_view.hpp"
 #include "view/grid_dropdown.hpp"
 #include "view/subtitle_core.hpp"
-'#include "view/mpv_core.hpp"
+#include "view/mpv_core.hpp"
 
 #ifdef ABSOLUTE
 #undef ABSOLUTE
-#endif'
+#endif
 
 class DataSourceCommentList : public RecyclingGridDataSource, public CommentAction {
 public:
