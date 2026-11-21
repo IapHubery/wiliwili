@@ -632,6 +632,8 @@ void PlayerActivity::onIndexChangeToNext() {
 
 uint64_t PlayerActivity::getAid() { return videoDetailResult.aid; }
 
+std::string PlayerActivity::getCoverUrl() { return this->videoDetailResult.pic; }
+
 PlayerActivity::~PlayerActivity() {
     brls::Logger::debug("del PlayerActivity");
     //上报历史记录

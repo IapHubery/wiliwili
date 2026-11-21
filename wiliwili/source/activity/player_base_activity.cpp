@@ -7,6 +7,7 @@
 #include <borealis/core/touch/tap_gesture.hpp>
 #include <borealis/views/applet_frame.hpp>
 #include <borealis/views/dialog.hpp>
+#include <borealis/views/image.hpp>
 
 #include "activity/player_activity.hpp"
 #include "fragment/player_collection.hpp"
@@ -17,6 +18,7 @@
 #include "utils/number_helper.hpp"
 #include "utils/local_store.hpp"
 #include "utils/toast_helper.hpp"
+#include "utils/image_helper.hpp"
 #include "presenter/comment_related.hpp"
 #include "utils/shortcut_helper.hpp"
 #include "view/qr_image.hpp"
@@ -926,6 +928,46 @@ void BasePlayerActivity::setRelationButton(bool liked, bool coin, bool favorite)
     }
 }
 
+void BasePlayerActivity::showErrorCover(const std::string& msg) {
+    if (!this->video) return;
+    if (!this->errorCoverBox) {
+        float width  = this->video->getWidth() > 0 ? this->video->getWidth() : brls::Application::contentWidth;
+        float height = this->video->getHeight() > 0 ? this->video->getHeight()
+                                                   : brls::Application::contentHeight * 0.62f;
+
+        this->errorCoverBox = new brls::Box();
+        this->errorCoverBox->setPositionType(brls::PositionType::ABSOLUTE);
+        this->errorCoverBox->setPositionTop(0);
+        this->errorCoverBox->setPositionLeft(0);
+        this->errorCoverBox->setWidth(width);
+        this->errorCoverBox->setHeight(height);
+        this->errorCoverBox->setBackgroundColor(nvgRGBA(0, 0, 0, 255));
+        this->errorCoverBox->setAxis(brls::Axis::COLUMN);
+        this->errorCoverBox->setJustifyContent(brls::JustifyContent::CENTER);
+        this->errorCoverBox->setAlignItems(brls::AlignItems::CENTER);
+
+        this->errorCoverImage = new brls::Image();
+        this->errorCoverImage->setGrow(1);
+        this->errorCoverImage->setScalingType(brls::ImageScalingType::FIT);
+
+        this->errorCoverLabel = new brls::Label();
+        this->errorCoverLabel->setFontSize(22);
+        this->errorCoverLabel->setMarginTop(12);
+        this->errorCoverLabel->setTextColor(nvgRGB(255, 255, 255));
+
+        this->errorCoverBox->addView(this->errorCoverImage);
+        this->errorCoverBox->addView(this->errorCoverLabel);
+        this->video->addView(this->errorCoverBox);
+    }
+
+    this->errorCoverLabel->setText(msg);
+    this->errorCoverBox->setVisibility(brls::Visibility::VISIBLE);
+    std::string cover = this->getCoverUrl();
+    if (!cover.empty()) {
+        ImageHelper::with(this->errorCoverImage)->load(cover + ImageHelper::h_ext);
+    }
+}
+
 void BasePlayerActivity::onError(const std::string& error) {
     if (!activityShown) return;
     MPVCore::instance().stop();
@@ -949,9 +991,8 @@ void BasePlayerActivity::onError(const std::string& error) {
                         msg.find("付费") != std::string::npos || msg.find("充电") != std::string::npos ||
                         msg.find("预览") != std::string::npos;
     if (inlineStatus) {
-        this->video->showOSD(false);
-        this->video->setCenterHintText(msg);
-        this->video->showCenterHint();
+        this->video->hideOSD();
+        this->showErrorCover(msg);
         ToastHelper::show(msg);
         return;
     }

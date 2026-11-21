@@ -44,6 +44,9 @@ public:
     void onVideoRelationInfo(const bilibili::VideoRelation& result) override;
     void onHighlightProgress(const bilibili::VideoHighlightProgress& result) override;
 
+    /// 当前视频封面（用于大会员/付费视频的播放区预览）
+    virtual std::string getCoverUrl() { return ""; }
+
     // 初始化设置 播放界面通用内容
     void setCommonData();
 
@@ -139,6 +142,12 @@ private:
     bool activityShown = false;
     std::chrono::system_clock::time_point videoDeadline{};
 
+    // 大会员/付费视频：播放区封面 + 状态提示
+    brls::Box* errorCoverBox     = nullptr;
+    brls::Image* errorCoverImage = nullptr;
+    brls::Label* errorCoverLabel = nullptr;
+    void showErrorCover(const std::string& msg);
+
     // 重新选择当前清晰度的播放链接播放
     void updateVideoLink();
 };
@@ -163,6 +172,8 @@ public:
     void onRedirectToEp(const std::string& url) override;
     void onCastPlayUrl(const bilibili::VideoUrlResult& result) override;
     uint64_t getAid() override;
+
+    std::string getCoverUrl() override;
 
     void onContentAvailable() override;
 
@@ -209,6 +220,8 @@ public:
     void playSeason(uint64_t season_id);
 
     uint64_t getAid() override;
+
+    std::string getCoverUrl() override;
 
 private:
     unsigned int pgc_id;

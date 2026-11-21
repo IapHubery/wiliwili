@@ -469,6 +469,8 @@ void PlayerSeasonActivity::playSeason(uint64_t season_id) {
 
 uint64_t PlayerSeasonActivity::getAid() { return episodeResult.aid; }
 
+std::string PlayerSeasonActivity::getCoverUrl() { return this->seasonInfo.cover; }
+
 void PlayerSeasonActivity::requestCastUrl() { this->requestCastVideoUrl(episodeResult.id, episodeResult.cid, 2); }
 
 void PlayerSeasonActivity::onCastPlayUrl(const bilibili::VideoUrlResult& result) {
