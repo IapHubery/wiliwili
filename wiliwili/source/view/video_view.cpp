@@ -403,7 +403,7 @@ VideoView::VideoView() {
         frame->setInFadeAnimation(true);
         frame->setHeaderVisibility(brls::Visibility::GONE);
         frame->setFooterVisibility(brls::Visibility::GONE);
-        frame->setBackgroundColor(theme.getColor("brls/backdrop"));
+        frame->setBackgroundColor(nvgRGBA(0, 0, 0, 0));
         container->registerAction("hints/back"_i18n, brls::BUTTON_B, [this, container](...) {
             // 几秒后自动关闭 OSD
             this->showOSD(true);
