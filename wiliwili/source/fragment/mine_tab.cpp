@@ -176,6 +176,29 @@ void MineTab::onCreate() {
 
 MineTab::~MineTab() { brls::Logger::debug("Fragment MineTabActivity: delete"); }
 
+void MineTab::onShow() {
+    brls::Logger::debug("Fragment MineTab: onShow, refresh data");
+    this->refreshData();
+}
+
+void MineTab::refreshData() {
+    // 用户信息 / 关注数 / 动态数
+    this->requestData();
+
+    // 历史记录：登录时拉取服务器，未登录时读取本地
+    if (this->mineHistory && !this->mineHistory->isEditing()) {
+        this->mineHistory->requestData(true);
+    }
+
+    // 其余列表需要登录，未登录时不发起请求
+    if (!ProgramConfig::instance().hasLoginInfo()) return;
+    if (this->mineLater) this->mineLater->requestData(true);
+    if (this->mineCollection) this->mineCollection->requestData(true);
+    if (this->mineSubscription) this->mineSubscription->requestData(true);
+    if (this->mineAnime) this->mineAnime->requestData(true);
+    if (this->mineSeries) this->mineSeries->requestData(true);
+}
+
 void MineTab::onUserNotLogin() {
     boxGotoUserSpace->registerAction(
         "hints/ok"_i18n, BUTTON_A,

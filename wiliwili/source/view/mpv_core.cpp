@@ -264,8 +264,33 @@ void initMpvProc(Module dll, fnGetProcAddress pGetProcAddress) {
 
 MPVCore::MPVCore() {
 #if defined(MPV_BUNDLE_DLL)
-    HMODULE hMpv = ::LoadLibraryW(L"libmpv-2.dll");
-    if (!hMpv) {
+    // 只允许从 exe 所在目录加载外部 libmpv-2.dll。
+    // 不能直接用 LoadLibraryW(L"libmpv-2.dll")，否则会沿 PATH 找到 MSYS2 里的
+    // mpv，它与 PATH 中其它 libstdc++/libopenal 版本不匹配，启动时会弹出
+    // “无法定位程序输入点” 的对话框。找不到外部文件时直接使用内嵌 mpv。
+    HMODULE hMpv = nullptr;
+    {
+        wchar_t exePath[MAX_PATH] = {0};
+        if (::GetModuleFileNameW(nullptr, exePath, MAX_PATH) > 0) {
+            std::wstring dllPath(exePath);
+            auto sep = dllPath.find_last_of(L"\\/");
+            if (sep != std::wstring::npos) {
+                dllPath.resize(sep + 1);
+                dllPath += L"libmpv-2.dll";
+                if (::GetFileAttributesW(dllPath.c_str()) != INVALID_FILE_ATTRIBUTES) {
+                    hMpv = ::LoadLibraryW(dllPath.c_str());
+                }
+            }
+        }
+    }
+
+    if (hMpv) {
+        char dllPath[MAX_PATH];
+        ::GetModuleFileNameA(hMpv, dllPath, sizeof(dllPath));
+
+        brls::Logger::info("Load external `{}`", dllPath);
+        initMpvProc(hMpv, GetProcAddress);
+    } else {
         HRSRC hSrc   = ::FindResource(nullptr, "MPV", RT_RCDATA);
         HGLOBAL hRes = ::LoadResource(nullptr, hSrc);
         DWORD dwSize = ::SizeofResource(nullptr, hSrc);
@@ -274,12 +299,6 @@ MPVCore::MPVCore() {
 
         brls::Logger::info("Load bundled libmpv-2.dll, size: {}", dwSize);
         initMpvProc(dll, MemoryGetProcAddress);
-    } else {
-        char dllPath[MAX_PATH];
-        ::GetModuleFileNameA(hMpv, dllPath, sizeof(dllPath));
-
-        brls::Logger::info("Load external `{}`", dllPath);
-        initMpvProc(hMpv, GetProcAddress);
     }
 #endif
     this->init();

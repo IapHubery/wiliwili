@@ -247,8 +247,10 @@ void SettingActivity::onContentAvailable() {
     btnVibrationTest->setVisibility(brls::Visibility::GONE);
 #endif
 
-    std::string version = APPVersion::instance().git_tag.empty() ? "v" + APPVersion::instance().getVersionStr()
-                                                                 : APPVersion::instance().git_tag;
+    // 关于页显示：v版本号-commit，例如 v1.6.1-50b936c（后面再拼渲染后端等备注）
+    auto& appVersion    = APPVersion::instance();
+    std::string version = "v" + appVersion.getVersionStr();
+    if (!appVersion.git_commit.empty()) version += "-" + appVersion.git_commit;
     btnReleaseChecker->title->setText("wiliwili/setting/tools/others/release"_i18n + " (" + "hints/current"_i18n +
                                       ": " + version + ")");
     btnReleaseChecker->registerClickAction([](...) -> bool {

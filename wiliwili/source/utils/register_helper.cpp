@@ -214,6 +214,7 @@ void Register::initCustomStyle() {
         brls::getStyle().addMetric("wiliwili/player/bottom/font", 10);
         brls::getStyle().addMetric("wiliwili/comment/level/x", 30);
         brls::getStyle().addMetric("wiliwili/margin/20", 10);
+        brls::getStyle().addMetric("wiliwili/margin/10", 5);
         brls::getStyle().addMetric("wiliwili/about/qr", 150);
         brls::getStyle().addMetric("wiliwili/about/speech/width", 420);
         brls::getStyle().addMetric("wiliwili/about/speech/header", 495);
@@ -248,6 +249,7 @@ void Register::initCustomStyle() {
         brls::getStyle().addMetric("wiliwili/player/bottom/font", 13);
         brls::getStyle().addMetric("wiliwili/comment/level/x", 45);
         brls::getStyle().addMetric("wiliwili/margin/20", 20);
+        brls::getStyle().addMetric("wiliwili/margin/10", 10);
         brls::getStyle().addMetric("wiliwili/about/qr", 200);
         brls::getStyle().addMetric("wiliwili/about/speech/width", 660);
         brls::getStyle().addMetric("wiliwili/about/speech/header", 760);

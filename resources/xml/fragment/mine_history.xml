@@ -17,8 +17,9 @@
             <NavBox
                     id="mine/history/today"
                     height="36"
+                    marginLeft="12"
                     cornerRadius="18"
-                    backgroundColor="@theme/color/grey_1"
+                    backgroundColor="@theme/color/bilibili"
                     paddingLeft="16"
                     paddingRight="16"
                     alignItems="center"
@@ -26,14 +27,14 @@
                 <brls:Label
                         text="@i18n/wiliwili/mine/local_today"
                         fontSize="17"
-                        textColor="@theme/font/grey"/>
+                        textColor="#FFFFFF"/>
             </NavBox>
             <brls:Box
                     id="mine/history/yesterday"
                     height="36"
                     marginLeft="12"
                     cornerRadius="18"
-                    backgroundColor="@theme/color/grey_1"
+                    backgroundColor="@theme/color/bilibili"
                     paddingLeft="16"
                     paddingRight="16"
                     alignItems="center"
@@ -41,14 +42,14 @@
                 <brls:Label
                         text="@i18n/wiliwili/mine/local_yesterday"
                         fontSize="17"
-                        textColor="@theme/font/grey"/>
+                        textColor="#FFFFFF"/>
             </brls:Box>
             <brls:Box
                     id="mine/history/older"
                     height="36"
                     marginLeft="12"
                     cornerRadius="18"
-                    backgroundColor="@theme/color/grey_1"
+                    backgroundColor="@theme/color/bilibili"
                     paddingLeft="16"
                     paddingRight="16"
                     alignItems="center"
@@ -56,7 +57,7 @@
                 <brls:Label
                         text="@i18n/wiliwili/mine/local_earlier"
                         fontSize="17"
-                        textColor="@theme/font/grey"/>
+                        textColor="#FFFFFF"/>
             </brls:Box>
 
             <brls:Box
@@ -101,26 +102,28 @@
 
         <brls:Box
                 id="mine/history/selectall"
-                height="40"
-                cornerRadius="20"
-                backgroundColor="@theme/color/grey_1"
-                paddingLeft="20"
-                paddingRight="20"
+                height="36"
+                marginLeft="12"
+                cornerRadius="18"
+                backgroundColor="@theme/color/bilibili"
+                paddingLeft="16"
+                paddingRight="16"
                 alignItems="center"
                 focusable="true">
             <brls:Label
                     text="@i18n/wiliwili/mine/local_select_all"
                     fontSize="18"
-                    textColor="@theme/font/grey"/>
+                    textColor="#FFFFFF"/>
         </brls:Box>
 
         <NavBox
                 id="mine/history/delete"
-                height="40"
-                cornerRadius="20"
+                height="36"
+                marginLeft="12"
+                cornerRadius="18"
                 backgroundColor="#E05A5A"
-                paddingLeft="20"
-                paddingRight="20"
+                paddingLeft="16"
+                paddingRight="16"
                 alignItems="center"
                 focusable="true">
             <brls:Label

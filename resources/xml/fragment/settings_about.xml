@@ -44,11 +44,35 @@
         <brls:Header
                 title="@i18n/wiliwili/setting/about/repo_header"
                 marginBottom="@style/wiliwili/margin/20"/>
-        <brls:Label
-                textColor="#6693B6"
+
+        <brls:Box
                 marginLeft="20"
-                marginBottom="@style/wiliwili/margin/20"
-                text="@i18n/wiliwili/github"/>
+                marginBottom="@style/wiliwili/margin/10">
+
+                <brls:Label
+                        lineHeight="1"
+                        text="upstream link: " />
+
+                <brls:Label
+                        marginLeft="10"
+                        textColor="#6693B6"
+                        text="@i18n/wiliwili/github_upstream"/>
+        </brls:Box>
+
+        <brls:Box
+                marginLeft="20"
+                marginBottom="@style/wiliwili/margin/10">
+
+                <brls:Label
+                        lineHeight="1"
+                        text="current project: "/>
+                <brls:Label
+                        marginLeft="10"
+                        textColor="#6693B6"
+                        text="@i18n/wiliwili/github"/>
+
+        </brls:Box>
+
 
         <brls:Header
                 width="@style/wiliwili/about/speech/header"

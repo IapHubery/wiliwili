@@ -4,8 +4,9 @@
     "save_fail": "Failed to save image"
   },
   "title": "wiliwili",
-  "github": "https://github.com/xfangfang/wiliwili",
-  "github_release": "https://github.com/xfangfang/wiliwili/releases/latest",
+  "github_upstream": "https://github.com/xfangfang/wiliwili",
+  "github": "https://github.com/IapHubery/wiliwili",
+  "github_release": "https://github.com/IapHubery/wiliwili/releases/latest",
   "setting": {
     "quit_hint": "You are about to exit the application. The settings will take effect after the next startup",
     "app": {

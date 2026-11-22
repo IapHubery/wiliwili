@@ -15,6 +15,7 @@
 */
 
 #include <borealis/core/touch/tap_gesture.hpp>
+#include <borealis/core/thread.hpp>
 
 #include "activity/main_activity.hpp"
 #include "utils/activity_helper.hpp"
@@ -22,8 +23,39 @@
 #include "view/custom_button.hpp"
 #include "view/auto_tab_frame.hpp"
 #include "view/svg_image.hpp"
+#include "bilibili/result/mine_result.h"
+#include "fragment/mine_tab.hpp"
 
 MainActivity::~MainActivity() { brls::Logger::debug("del MainActivity"); }
+
+void MainActivity::onResume() {
+    brls::Activity::onResume();
+    if (!this->tabFrame) return;
+
+    // 从私信/设置页返回：焦点栈会把焦点还给底部按钮，延后一帧再还给当前标签
+    if (this->restoreTabFocus) {
+        this->restoreTabFocus = false;
+        brls::sync([this]() { this->focusActiveTab(); });
+    } else {
+        // 兜底：焦点仍停在底部按钮上时也恢复
+        brls::View* focus = brls::Application::getCurrentFocus();
+        if (focus == this->inboxBtn || focus == this->settingBtn) {
+            this->focusActiveTab();
+        }
+    }
+
+    // 从播放页/设置页返回时，用户空间的列表（历史等）可能已过期
+    if (auto* mine = dynamic_cast<MineTab*>(this->tabFrame->getActiveTab())) {
+        mine->refreshData();
+    }
+}
+
+void MainActivity::focusActiveTab() {
+    if (!this->tabFrame) return;
+    if (auto* tab = this->tabFrame->getTab((size_t)this->tabFrame->getActiveIndex())) {
+        brls::Application::giveFocus(tab);
+    }
+}
 
 void MainActivity::onContentAvailable() {
     this->registerAction(
@@ -42,7 +74,8 @@ void MainActivity::onContentAvailable() {
         },
         true);
 
-    this->settingBtn->registerClickAction([](brls::View* view) -> bool {
+    this->settingBtn->registerClickAction([this](brls::View* view) -> bool {
+        this->restoreTabFocus = true;
         Intent::openSetting();
         return true;
     });
@@ -91,8 +124,14 @@ void MainActivity::onContentAvailable() {
     });
     this->settingBtn->addGestureRecognizer(new brls::TapGestureRecognizer(this->settingBtn));
 
-    this->inboxBtn->registerClickAction([](brls::View* view) -> bool {
-        if (DialogHelper::checkLogin()) Intent::openInbox();
+    this->inboxBtn->registerClickAction([this](brls::View* view) -> bool {
+        if (DialogHelper::checkLogin()) {
+            this->restoreTabFocus = true;
+            Intent::openInbox();
+        } else {
+            // 未登录时只提示、不跳转，把焦点放回当前标签，避免按钮和标签同时高亮
+            this->focusActiveTab();
+        }
         return true;
     });
 

@@ -21,6 +21,7 @@
 #include "utils/config_helper.hpp"
 #include "utils/image_helper.hpp"
 #include "utils/number_helper.hpp"
+#include "api/bilibili/util/http.hpp"
 #include "bilibili/util/json.hpp"
 
 using namespace brls::literals;
@@ -88,11 +89,13 @@ std::string imageFileName(const std::string& url) {
 void saveImageAsync(const std::string& url) {
     std::string link = bilibili::parseLink(url);
     std::thread([link]() {
-        cpr::Response r =
-            cpr::Get(cpr::Url{link},
-                     cpr::Header{{"User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0"},
-                                 {"Referer", "https://www.bilibili.com/"}},
-                     cpr::Timeout{15000});
+        auto session = bilibili::HTTP::createSession();
+        session->SetUrl(cpr::Url{link});
+        session->SetHeader(cpr::Header{
+            {"User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0"},
+            {"Referer", "https://www.bilibili.com/"}});
+        session->SetTimeout(cpr::Timeout{15000});
+        cpr::Response r = session->Get();
         if (r.status_code != 200 || r.text.empty()) {
             brls::Logger::error("saveImage: download failed {} {}", r.status_code, link);
             brls::sync([] { brls::Application::notify("wiliwili/image/save_fail"_i18n); });

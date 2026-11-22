@@ -80,6 +80,10 @@ public:
 
     static std::string getEncodedCookie(const cpr::Cookies& cookies);
 
+    // 便携版会带上自己的 CA 证书。MSYS2 的 libcurl 默认按 DLL 相对路径（../etc/ssl/certs）
+    // 查找证书，DLL 被复制到其它目录后就找不到了，这里显式指定 exe 同目录下的证书。
+    static std::string getCABundlePath();
+
     // 未登录时，部分接口（例如评论列表）只要请求里带了 cookie，就会只返回很短的列表
     // 并且 is_end=true（无法翻页），这里提供一套不带 cookie 的请求头
     static cpr::Header getHeadersWithoutCookie() {
@@ -98,6 +102,8 @@ public:
         session->SetHeader(bilibili::HTTP::HEADERS);
         session->SetProxies(bilibili::HTTP::PROXIES);
         session->SetVerifySsl(bilibili::HTTP::VERIFY);
+        static const std::string caBundle = HTTP::getCABundlePath();
+        if (!caBundle.empty()) curl_easy_setopt(curl, CURLOPT_CAINFO, caBundle.c_str());
         return session;
     }
 

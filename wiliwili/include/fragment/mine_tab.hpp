@@ -32,6 +32,12 @@ public:
 
     void onCreate() override;
 
+    /// 从其它标签页/播放页回到“用户空间”时刷新所有列表
+    void onShow() override;
+
+    /// 刷新用户信息与历史/稍后/收藏/订阅/追番列表
+    void refreshData();
+
     void onUserInfo(const bilibili::UserResult& data) override;
 
     void onUserNotLogin() override;
