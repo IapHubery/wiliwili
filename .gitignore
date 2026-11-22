@@ -37,3 +37,4 @@ AGENT.md
 dist/
 # 构建教程（避免被 build-* 规则忽略）
 !build-win-portable-readme.md
+!build-win-portable-strip-readme.md

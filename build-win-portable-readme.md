@@ -229,8 +229,11 @@ MPV Version: mpv v0.40.0
 
 | 产物 | exe | 解压后 | zip |
 |---|---|---|---|
-| 单 exe（CI 同款） | ~72 MB | ~72 MB | ~30 MB |
+| 单 exe（未 strip，调试用） | ~72 MB | ~72 MB | ~30 MB |
+| 单 exe（strip 后发布） | ~61 MB | ~61 MB | ~28.7 MB |
 | 目录版（带 DLL） | ~27 MB | ~222 MB | ~88 MB |
+
+> 上游 release 的 exe 约 55 MB / zip 26 MB，差异主要来自「上游已 strip + 代码更小」。strip 的原理和进一步瘦身方法见 [build-win-portable-strip-readme.md](build-win-portable-strip-readme.md)。
 
 ---
 
